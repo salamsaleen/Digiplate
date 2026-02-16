@@ -1,0 +1,19 @@
+MONGODB_URI=mongodb://localhost:27017/digiplate
+NEXTAUTH_SECRET=changeme_in_production
+NEXTAUTH_URL=http://localhost:3000
+
+# Twilio (For SMS)
+TWILIO_ACCOUNT_SID=
+TWILIO_AUTH_TOKEN=
+TWILIO_PHONE_NUMBER=
+
+# Nodemailer (For Email)
+EMAIL_SERVER_HOST=smtp.gmail.com
+EMAIL_SERVER_PORT=587
+EMAIL_SERVER_USER=kickeditz261@gmail.com
+EMAIL_SERVER_PASSWORD=jsnucomjaomlkgtl
+EMAIL_FROM=kickeditz261@gmail.com
+# Razorpay
+RAZORPAY_KEY_ID=
+RAZORPAY_KEY_SECRET=
+NEXT_PUBLIC_RAZORPAY_KEY_ID=

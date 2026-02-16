@@ -1,0 +1,11 @@
+[SETTINGS POST] Date: 2026-02-13T18:30:00.000Z, Body: {"date":"2026-02-13T18:30:00.000Z","mealType":"Porridge","isOpen":true,"closingReason":"","sideDishes":["അച്ചാർ","പപ്പടം","ഉപ്പേരി"]}
+[SETTINGS POST] Date: 2026-02-13T18:30:00.000Z, Body: {"date":"2026-02-13T18:30:00.000Z","mealType":"Porridge","isOpen":true,"closingReason":"","sideDishes":["അച്ചാർ","പപ്പടം","ഉപ്പേരി"]}
+[SETTINGS POST] Date: 2026-02-13T18:30:00.000Z, Body: {"date":"2026-02-13T18:30:00.000Z","mealType":"Porridge","isOpen":true,"closingReason":"","sideDishes":["അച്ചാർ","പപ്പടം","ഉപ്പേരി"]}
+[BOOK POLL] Settings Found: true, SideDishes: undefined
+[SETTINGS POST] Date: 2026-02-13T18:30:00.000Z, Body: {"date":"2026-02-13T18:30:00.000Z","mealType":"Porridge","isOpen":true,"closingReason":"","sideDishes":["പപ്പടം","അച്ചാർ","ഉപ്പേരി"]}
+[SETTINGS POST] Date: 2026-02-13T18:30:00.000Z, Body: {"date":"2026-02-13T18:30:00.000Z","mealType":"Porridge","isOpen":true,"closingReason":"","sideDishes":["പപ്പടം","അച്ചാർ","ഉപ്പേരി"]}
+[SETTINGS POST] Date: 2026-02-13T18:30:00.000Z, Body: {"date":"2026-02-13T18:30:00.000Z","mealType":"Rice","isOpen":true,"closingReason":"","sideDishes":["പപ്പടം","അച്ചാർ","ഉപ്പേരി"]}
+[BOOK POLL] Settings Found: true, SideDishes: ["പപ്പടം","അച്ചാർ","ഉപ്പേരി"]
+[BOOK POLL] Settings Found: true, SideDishes: ["പപ്പടം","അച്ചാർ","ഉപ്പേരി"]
+[SETTINGS POST] Date: 2026-02-13T18:30:00.000Z, Body: {"date":"2026-02-13T18:30:00.000Z","mealType":"Rice","isOpen":true,"closingReason":"","sideDishes":["പപ്പടം","അച്ചാർ","ഉപ്പേരി"]}
+[SETTINGS DEBUG] Schema sideDishes path: true

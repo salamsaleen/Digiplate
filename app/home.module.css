@@ -1,0 +1,255 @@
+/* Main Container */
+.container {
+    display: flex;
+    min-height: 100vh;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    /* Deep Navy Blue Background for "App" feel */
+    background: linear-gradient(135deg, #020617 0%, #1e3a8a 100%);
+    color: #f1f5f9;
+    padding: 1.5rem;
+    text-align: center;
+    font-family: 'Inter', sans-serif;
+}
+
+/* Main Content Area */
+.mainContent {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2rem;
+    max-width: 26rem;
+    width: 100%;
+    /* Responsive width */
+    /* Glassmorphism Effect */
+    background: rgba(30, 41, 59, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 2.5rem 2rem;
+    border-radius: 1.5rem;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    position: relative;
+    z-index: 10;
+}
+
+.backgroundWatermark {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 15vw;
+    font-weight: 900;
+    white-space: nowrap;
+
+    /* Metallic Gradient */
+    background: linear-gradient(180deg, #334155 0%, #1e293b 50%, #0f172a 51%, #1e293b 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+
+    /* Shining Shadow */
+    filter: drop-shadow(0 0 20px rgba(0, 0, 0, 0.8));
+
+    z-index: 0;
+    pointer-events: none;
+    font-family: 'Times New Roman', serif;
+    letter-spacing: 2rem;
+    opacity: 0.3;
+}
+
+/* Logo Section */
+.logoSection {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.logoWrapper {
+    position: relative;
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.logoWrapper:hover {
+    transform: scale(1.05) rotate(5deg);
+}
+
+.logoBg {
+    width: 5rem;
+    height: 5rem;
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    border-radius: 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.4), inset 0 2px 4px rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.logoBg::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg, transparent 45%, rgba(255, 255, 255, 0.1) 50%, transparent 55%);
+    animation: shine 3s infinite;
+}
+
+@keyframes shine {
+    0% {
+        transform: translate(-30%, -30%);
+    }
+
+    100% {
+        transform: translate(30%, 30%);
+    }
+}
+
+.nmsmLogo {
+    font-size: clamp(2.5rem, 8vw, 4rem);
+    /* Responsive Font Size */
+    font-weight: 900;
+    letter-spacing: clamp(0.2rem, 1vw, 0.5rem);
+    /* Responsive Spacing */
+    font-family: 'Times New Roman', serif;
+    background: linear-gradient(180deg, #f8fafc 0%, #94a3b8 50%, #475569 51%, #cbd5e1 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0px 4px 10px rgba(0, 0, 0, 0.8), 0 0 20px rgba(255, 255, 255, 0.2);
+    filter: drop-shadow(0 10px 10px rgba(0, 0, 0, 0.5));
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+}
+
+.title {
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    color: white;
+    margin: 0;
+}
+
+/* Login Form Area */
+.loginForm {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.cardHeader {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: #94a3b8;
+    margin-bottom: 0.5rem;
+}
+
+/* Form Elements */
+.inputGroup {
+    text-align: left;
+    position: relative;
+}
+
+.label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #cbd5e1;
+    margin-bottom: 0.5rem;
+    margin-left: 0.25rem;
+}
+
+.input {
+    width: 100%;
+    padding: 1rem 1.25rem;
+    background-color: rgba(15, 23, 42, 0.6);
+    border: 1px solid #334155;
+    border-radius: 0.75rem;
+    color: white;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+}
+
+.input:focus {
+    outline: none;
+    border-color: #60a5fa;
+    background-color: rgba(15, 23, 42, 0.8);
+    box-shadow: 0 0 0 4px rgba(96, 165, 250, 0.15);
+}
+
+.input::placeholder {
+    color: #64748b;
+}
+
+.button {
+    width: 100%;
+    padding: 1rem;
+    margin-top: 1rem;
+    background: linear-gradient(135deg, #3b82f6 0%, #4f46e5 100%);
+    color: white;
+    font-weight: 700;
+    font-size: 1rem;
+    border-radius: 0.75rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+    transition: all 0.2s;
+    cursor: pointer;
+    border: none;
+    letter-spacing: 0.025em;
+}
+
+.button:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.4);
+}
+
+.button:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background: #475569;
+}
+
+/* Footer & Extras */
+.divider {
+    height: 1px;
+    background-color: #334155;
+    width: 100%;
+    margin: 1.5rem 0;
+}
+
+.footer {
+    position: absolute;
+    bottom: 1.5rem;
+    font-size: 0.75rem;
+    color: #64748b;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    opacity: 0.8;
+}
+
+/* Animations */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px) scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
