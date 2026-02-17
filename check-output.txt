@@ -1,0 +1,16 @@
+﻿Full URI: mongodb+srv://digiplatenmsm:digiNmsm00##@cluster0.2dj5wzx.mongodb.net/digiplate
+
+--- URI Analysis ---
+Protocol: mongodb+srv://
+Username: digiplatenmsm
+Password (raw): digiNmsm00##
+Password (URL encoded): digiNmsm00%23%23
+Cluster: cluster0.2dj5wzx.mongodb.net
+Database: digiplate
+
+--- Issues Detected ---
+ΓÜá∩╕Å  PASSWORD CONTAINS SPECIAL CHARACTERS: #
+These characters MUST be URL-encoded in the connection string!
+
+Corrected URI:
+mongodb+srv://digiplatenmsm:digiNmsm00%23%23@cluster0.2dj5wzx.mongodb.net/digiplate

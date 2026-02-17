@@ -6,123 +6,81 @@
     "name": "Super Admin"
   },
   {
-    "email": "canteen@digiplate.com",
-    "role": "canteen_staff",
-    "department": "canteen",
-    "name": "Canteen Staff"
-  },
-  {
-    "email": "hod.cs@digiplate.com",
+    "email": "cs_admin@digiplate.com",
     "role": "dept_admin",
-    "department": "cs",
+    "department": "bsc.cs",
     "name": "CS HOD"
   },
   {
-    "email": "hod.chem@digiplate.com",
-    "role": "dept_admin",
-    "department": "chemistry",
-    "name": "Chemistry HOD"
-  },
-  {
-    "email": "hod.history@digiplate.com",
-    "role": "dept_admin",
-    "department": "history",
-    "name": "History HOD"
-  },
-  {
-    "email": "hod.eco@digiplate.com",
-    "role": "dept_admin",
-    "department": "economics",
-    "name": "Economics HOD"
-  },
-  {
-    "email": "hod.jmc@digiplate.com",
-    "role": "dept_admin",
-    "department": "jmc",
-    "name": "JMC HOD"
-  },
-  {
-    "email": "hod.commerce@digiplate.com",
-    "role": "dept_admin",
-    "department": "commerce",
-    "name": "Commerce HOD"
-  },
-  {
-    "email": "student.cs@digiplate.com",
+    "email": "student@digiplate.com",
     "role": "student",
-    "department": "cs",
-    "name": "Rahul CS"
+    "department": "bsc.cs",
+    "name": "Arjun Student"
   },
   {
-    "email": "student.balhis@digiplate.com",
-    "role": "student",
-    "department": "history",
-    "name": "Anjali History (BA)"
-  },
-  {
-    "email": "student.mahis@digiplate.com",
-    "role": "student",
-    "department": "history",
-    "name": "Vishnu History (MA)"
+    "email": "canteen@digiplate.com",
+    "role": "canteen_staff",
+    "department": "canteen",
+    "name": "Main Canteen Staff"
   },
   {
     "email": "student1@digiplate.com",
     "role": "student",
-    "department": "jmc",
-    "name": "Student 1 (JMC PG)"
+    "department": "bsc.cs",
+    "name": "Test Student 1"
   },
   {
     "email": "student2@digiplate.com",
     "role": "student",
-    "department": "history",
-    "name": "Student 2 (HISTORY PG)"
+    "department": "bsc.cs",
+    "name": "Test Student 2"
   },
   {
     "email": "student3@digiplate.com",
     "role": "student",
-    "department": "chemistry",
-    "name": "Student 3 (CHEMISTRY UG)"
+    "department": "bsc.cs",
+    "name": "Test Student 3"
   },
   {
     "email": "student4@digiplate.com",
     "role": "student",
-    "department": "chemistry",
-    "name": "Student 4 (CHEMISTRY PG)"
+    "department": "bsc.cs",
+    "name": "Test Student 4"
   },
   {
     "email": "student5@digiplate.com",
     "role": "student",
-    "department": "history",
-    "name": "Student 5 (HISTORY PG)"
+    "department": "bsc.cs",
+    "name": "Test Student 5"
   },
   {
     "email": "student6@digiplate.com",
     "role": "student",
-    "department": "history",
-    "name": "Student 6 (HISTORY PG)"
+    "department": "bsc.cs",
+    "name": "Test Student 6"
   },
   {
     "email": "student7@digiplate.com",
     "role": "student",
-    "department": "cs",
-    "name": "Student 7 (CS PG)"
+    "department": "bsc.cs",
+    "name": "Test Student 7"
   },
   {
     "email": "student8@digiplate.com",
     "role": "student",
-    "department": "economics",
-    "name": "Student 8 (ECONOMICS UG)"
+    "department": "bsc.cs",
+    "name": "Test Student 8"
   },
   {
     "email": "student9@digiplate.com",
     "role": "student",
-    "department": "jmc",
-    "name": "Student 9 (JMC UG)"
+    "department": "bsc.cs",
+    "name": "Test Student 9"
   },
   {
     "email": "student10@digiplate.com",
     "role": "student",
-    "department": "cs",
-    "name": "Student 10 (CS PG)"
+    "department": "bsc.cs",
+    "name": "Test Student 10"
   }
 ]
