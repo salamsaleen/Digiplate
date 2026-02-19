@@ -39,3 +39,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# debug log files (never commit - causes EROFS on Vercel)
+debug_api_log.txt
+*.log
