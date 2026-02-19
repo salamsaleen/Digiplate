@@ -11,6 +11,9 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
         }
 
+        console.log('[PAYMENT ORDER] Request received for user:', session.user?.email);
+
+
         if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
             console.error('Razorpay Keys Missing');
             return NextResponse.json({ message: 'Razorpay API Keys are missing in server config' }, { status: 500 });

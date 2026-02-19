@@ -1,0 +1,51 @@
+
+import { NextRequest, NextResponse } from 'next/server';
+import Razorpay from 'razorpay';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+
+export async function POST(req: NextRequest) {
+    try {
+        const session = await getServerSession(authOptions);
+        if (!session) {
+            return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+        }
+
+        if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
+            return NextResponse.json({ message: 'Razorpay API Keys missing' }, { status: 500 });
+        }
+
+        const user = session.user as any;
+        const razorpay = new Razorpay({
+            key_id: process.env.RAZORPAY_KEY_ID,
+            key_secret: process.env.RAZORPAY_KEY_SECRET,
+        });
+
+        // Payment Link expires in 30 minutes
+        const expireBy = Math.floor(Date.now() / 1000) + 30 * 60;
+
+        // Create a Razorpay Payment Link — Razorpay tracks all payments via this link
+        const paymentLink = await (razorpay as any).paymentLink.create({
+            amount: 1000, // ₹10 in paise
+            currency: 'INR',
+            description: 'DigiPlate Meal Coupon – ₹10',
+            customer: {
+                name: user.name || 'Student',
+                email: user.email || '',
+            },
+            notify: { sms: false, email: false },
+            reminder_enable: false,
+            expire_by: expireBy,
+        });
+
+        return NextResponse.json({
+            paymentLinkId: paymentLink.id,
+            shortUrl: paymentLink.short_url,  // e.g. https://rzp.io/l/abc123
+            amount: paymentLink.amount,
+        });
+
+    } catch (error: any) {
+        console.error('[QR CREATE ERROR]', error);
+        return NextResponse.json({ message: error.error?.description || error.message }, { status: 500 });
+    }
+}
