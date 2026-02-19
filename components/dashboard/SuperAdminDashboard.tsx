@@ -9,7 +9,7 @@ export default function SuperAdminDashboard({ user }: { user: any }) {
         email: '',
         phone: '',
         role: 'dept_admin',
-        department: 'bsc.cs', // Default
+        department: 'cs', // Default
     });
     const [message, setMessage] = useState('');
     const [stats, setStats] = useState({ totalStudents: 0, activeCoupons: 0, redeemedToday: 0, paidCount: 0, revenue: 0, monthlyRevenue: 0 });
