@@ -99,7 +99,7 @@ export async function POST(req: NextRequest) {
                 date: { $gte: settingsStartDate, $lt: settingsEndDate }
             });
 
-            require('fs').appendFileSync('debug_api_log.txt', `[BOOK POLL] Settings Found: ${!!settings}, SideDishes: ${JSON.stringify(settings?.sideDishes)}\n`);
+            // console.log(`[BOOK POLL] Settings Found: ${!!settings}, SideDishes: ${JSON.stringify(settings?.sideDishes)}\n`);
 
             const sideDishes = settings ? settings.sideDishes : ['പപ്പടം', 'അച്ചാർ', 'ഉപ്പേരി'];
 

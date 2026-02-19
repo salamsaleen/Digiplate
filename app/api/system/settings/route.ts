@@ -60,9 +60,9 @@ export async function POST(req: NextRequest) {
         let targetDate = new Date(date);
         targetDate.setHours(0, 0, 0, 0);
 
-        require('fs').appendFileSync('debug_api_log.txt', `[SETTINGS POST] Date: ${targetDate.toISOString()}, Body: ${JSON.stringify(body)}\n`);
+        // console.log(`[SETTINGS POST] Date: ${targetDate.toISOString()}, Body: ${JSON.stringify(body)}\n`);
         const schemaCheck = SystemSettings.schema.path('sideDishes');
-        require('fs').appendFileSync('debug_api_log.txt', `[SETTINGS DEBUG] Schema sideDishes path: ${!!schemaCheck}\n`);
+        // console.log(`[SETTINGS DEBUG] Schema sideDishes path: ${!!schemaCheck}\n`);
 
         const settings = await SystemSettings.findOneAndUpdate(
             { date: targetDate },

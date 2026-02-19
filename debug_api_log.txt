@@ -9,3 +9,5 @@
 [BOOK POLL] Settings Found: true, SideDishes: ["പപ്പടം","അച്ചാർ","ഉപ്പേരി"]
 [SETTINGS POST] Date: 2026-02-13T18:30:00.000Z, Body: {"date":"2026-02-13T18:30:00.000Z","mealType":"Rice","isOpen":true,"closingReason":"","sideDishes":["പപ്പടം","അച്ചാർ","ഉപ്പേരി"]}
 [SETTINGS DEBUG] Schema sideDishes path: true
+[PAYMENT ORDER] KeyID present: true, Secret present: true
+[PAYMENT ORDER] KeyID present: true, Secret present: true

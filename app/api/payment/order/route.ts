@@ -24,9 +24,7 @@ export async function POST(req: NextRequest) {
             key_secret: process.env.RAZORPAY_KEY_SECRET,
         });
 
-        // Log environment keys (masked) to debug file
-        const log = `[PAYMENT ORDER] KeyID present: ${!!process.env.RAZORPAY_KEY_ID}, Secret present: ${!!process.env.RAZORPAY_KEY_SECRET}\n`;
-        require('fs').appendFileSync('debug_api_log.txt', log);
+        console.log('[PAYMENT ORDER] KeyID present:', !!process.env.RAZORPAY_KEY_ID, 'Secret present:', !!process.env.RAZORPAY_KEY_SECRET);
 
         // Amount is in smallest currency unit (paise for INR)
         // ₹10 = 1000 paise
@@ -40,7 +38,7 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json(order);
     } catch (error: any) {
-        require('fs').appendFileSync('debug_api_log.txt', `[PAYMENT ORDER ERROR] ${error.message}\n`);
+        console.error('[PAYMENT ORDER ERROR]', error.message);
         console.error('Razorpay Order Error:', error);
         return NextResponse.json({ message: error.message }, { status: 500 });
     }
