@@ -6,6 +6,7 @@ import { authOptions } from '@/lib/auth';
 
 export async function POST(req: NextRequest) {
     try {
+        console.log('[VERIFIED_QR_CREATE_START]');
         const session = await getServerSession(authOptions);
         if (!session) {
             return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
@@ -16,6 +17,7 @@ export async function POST(req: NextRequest) {
         }
 
         const user = session.user as any;
+        console.log('[VERIFIED_QR_CREATE_BEFORE_RAZORPAY]');
         const razorpay = new Razorpay({
             key_id: process.env.RAZORPAY_KEY_ID,
             key_secret: process.env.RAZORPAY_KEY_SECRET,
