@@ -498,9 +498,17 @@ export default function CanteenDashboard({ user }: { user: any }) {
 
                 {/* Display Scanned/Validated Coupon Details */}
                 {scannedCoupon && (
-                    <div className="mt-6 p-4 rounded bg-white/5 border border-white/10 animate-fade-in">
-                        <h3 className="text-white font-bold text-center mb-3">Student Details</h3>
-                        <div className="space-y-2 text-sm">
+                    <div className={`mt-6 rounded-xl overflow-hidden border animate-fade-in ${scanResult === 'SUCCESS' ? 'border-green-500/40' : 'border-white/10'}`}>
+                        {/* Header */}
+                        <div className={`px-4 py-3 text-center ${scanResult === 'SUCCESS' ? 'bg-green-900/40' : 'bg-white/5'}`}>
+                            <h3 className="text-white font-bold text-base">
+                                {scanResult === 'SUCCESS' ? '✅ Coupon Validated' : '📋 Coupon Info'}
+                            </h3>
+                        </div>
+
+                        {/* Student Details */}
+                        <div className="p-4 space-y-2 text-sm border-b border-white/10">
+                            <p className="text-xs text-gray-500 uppercase font-bold tracking-widest mb-2">Student</p>
                             <div className="flex justify-between">
                                 <span className="text-gray-400">Name:</span>
                                 <span className="text-white font-medium">{scannedCoupon.studentId?.name || 'Unknown'}</span>
@@ -518,6 +526,37 @@ export default function CanteenDashboard({ user }: { user: any }) {
                             <div className="flex justify-between">
                                 <span className="text-gray-400">Valid Date:</span>
                                 <span className="text-white">{new Date(scannedCoupon.validForDate).toDateString()}</span>
+                            </div>
+                        </div>
+
+                        {/* Meal Details */}
+                        <div className="p-4 space-y-2 text-sm bg-orange-950/20">
+                            <p className="text-xs text-orange-400 uppercase font-bold tracking-widest mb-2">🍽️ Meal Details</p>
+                            <div className="flex justify-between items-center">
+                                <span className="text-gray-400">Main Dish:</span>
+                                <span className="text-orange-300 font-bold text-base">
+                                    {scannedCoupon.mealType === 'Rice'
+                                        ? '🍚 Rice (ചോറ്)'
+                                        : scannedCoupon.mealType === 'Porridge'
+                                            ? '🥣 Kanji (കഞ്ഞി)'
+                                            : scannedCoupon.mealType || '🍚 Rice (ചോറ്)'}
+                                </span>
+                            </div>
+                            <div className="flex justify-between items-start">
+                                <span className="text-gray-400 mt-1">Side Dishes:</span>
+                                <div className="text-right">
+                                    {scannedCoupon.sideDishes && scannedCoupon.sideDishes.length > 0 ? (
+                                        <div className="flex flex-wrap gap-1 justify-end max-w-[180px]">
+                                            {scannedCoupon.sideDishes.map((side: string, i: number) => (
+                                                <span key={i} className="bg-orange-900/50 border border-orange-500/30 text-orange-200 text-xs px-2 py-0.5 rounded-full">
+                                                    {side}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <span className="text-gray-500 text-xs">No sides listed</span>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </div>
