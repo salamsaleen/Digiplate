@@ -445,8 +445,8 @@ export default function CanteenDashboard({ user }: { user: any }) {
                     </div>
                 )}
 
-                {/* Scanner logic remains same... */}
-                {showScanner ? (
+                {/* Scanner Section */}
+                {showScanner && (
                     <div className="mb-6 rounded-lg overflow-hidden border border-white/20 relative bg-black">
                         <Scanner
                             onScan={handleScan}
@@ -469,14 +469,6 @@ export default function CanteenDashboard({ user }: { user: any }) {
                             ✕
                         </button>
                     </div>
-                ) : (
-                    <button
-                        onClick={() => setShowScanner(true)}
-                        className="w-full glass-button bg-indigo-600 hover:bg-indigo-700 mb-6 flex items-center justify-center gap-2 py-4 shadow-lg hover:shadow-indigo-500/20"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2" /><path d="M17 3h2a2 2 0 0 1 2 2v2" /><path d="M21 17v2a2 2 0 0 1-2 2h-2" /><path d="M7 21H5a2 2 0 0 1-2-2v-2" /></svg>
-                        Open QR Scanner
-                    </button>
                 )}
 
                 <div className="relative flex py-2 items-center">
