@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "DigiPlate",
   description: "Digital Canteen Coupon System",
-  manifest: "/manifest.json?v=2",
+  manifest: "/manifest.json?v=3",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
@@ -25,8 +25,8 @@ export const metadata: Metadata = {
     telephone: false,
   },
   icons: {
-    icon: "/icons/icon-512x512.png?v=2",
-    apple: "/icons/icon-192x192.png?v=2",
+    icon: "/icons/icon-512x512.png?v=3",
+    apple: "/icons/icon-192x192.png?v=3",
   },
 };
 export const viewport = {
