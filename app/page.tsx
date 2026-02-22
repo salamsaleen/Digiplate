@@ -42,7 +42,11 @@ export default function Home() {
         <div className={styles.logoSection}>
           <div className={styles.logoWrapper}>
             <div className={styles.logoBg}>
-              <span style={{ fontSize: '3rem' }}>🍽️</span>
+              <img
+                src="/icons/icon-512x512.png"
+                alt="DigiPlate Logo"
+                style={{ width: '80%', height: '80%', objectFit: 'contain' }}
+              />
             </div>
           </div>
 
