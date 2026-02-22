@@ -4,13 +4,12 @@ import Link from 'next/link';
 
 export default function SuperAdminDashboard({ user }: { user: any }) {
     const [showForm, setShowForm] = useState(false);
-    // Similar to Dept Admin but can create Dept Admins too
     const [formData, setFormData] = useState({
         name: '',
         email: '',
         phone: '',
         role: 'dept_admin',
-        department: 'cs', // Default
+        department: 'cs',
     });
     const [message, setMessage] = useState('');
     const [stats, setStats] = useState({ totalStudents: 0, activeCoupons: 0, redeemedToday: 0, paidCount: 0, revenue: 0, monthlyRevenue: 0 });
@@ -34,19 +33,17 @@ export default function SuperAdminDashboard({ user }: { user: any }) {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setMessage('Creating admin...');
-
         try {
             const res = await fetch('/api/users', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData),
             });
-
             const data = await res.json();
             if (res.ok) {
                 setMessage(`SUCCESS: Admin created! Credentials sent.`);
                 setFormData({ ...formData, name: '', email: '', phone: '' });
-                fetchStats(); // Refresh stats in case a student was somehow added
+                fetchStats();
             } else {
                 setMessage(`ERROR: ${data.message}`);
             }
@@ -160,40 +157,39 @@ export default function SuperAdminDashboard({ user }: { user: any }) {
                         </form>
                     </div>
                 )}
-            </div>
 
-            <div className="glass-panel p-6 h-fit bg-gradient-to-br from-indigo-900/40 to-purple-900/40">
-                <h2 className="text-xl font-semibold mb-6 text-white border-b border-white/10 pb-2">Platform Stats (Live)</h2>
-                <div className="space-y-6">
-                    <div className="flex justify-between items-center pb-2">
-                        <span className="text-gray-300">Total Students Registered</span>
-                        <span className="font-bold text-3xl text-fuchsia-400">{stats.totalStudents}</span>
-                    </div>
-                    <div className="flex justify-between items-center pb-2">
-                        <span className="text-gray-300">Active Coupons (Today)</span>
-                        <span className="font-bold text-3xl text-orange-400">{stats.activeCoupons}</span>
-                    </div>
-                    <div className="flex justify-between items-center pb-2">
-                        <span className="text-gray-300">Coupons Redeemed Today</span>
-                        <span className="font-bold text-3xl text-indigo-400">{stats.redeemedToday}</span>
-                    </div>
-                    <div className="border-t border-white/10 pt-4 mt-2">
+                <div className="glass-panel p-6 h-fit bg-gradient-to-br from-indigo-900/40 to-purple-900/40">
+                    <h2 className="text-xl font-semibold mb-6 text-white border-b border-white/10 pb-2">Platform Stats (Live)</h2>
+                    <div className="space-y-6">
                         <div className="flex justify-between items-center pb-2">
-                            <span className="text-gray-300">Paid Meals Count</span>
-                            <span className="font-bold text-3xl text-cyan-300">{stats.paidCount || 0}</span>
+                            <span className="text-gray-300">Total Students Registered</span>
+                            <span className="font-bold text-3xl text-fuchsia-400">{stats.totalStudents}</span>
                         </div>
                         <div className="flex justify-between items-center pb-2">
-                            <span className="text-gray-300">Total Revenue (Today)</span>
-                            <span className="font-bold text-3xl text-rose-300">₹{stats.revenue || 0}</span>
+                            <span className="text-gray-300">Active Coupons (Today)</span>
+                            <span className="font-bold text-3xl text-orange-400">{stats.activeCoupons}</span>
                         </div>
                         <div className="flex justify-between items-center pb-2">
-                            <span className="text-gray-300">Total Revenue (Month)</span>
-                            <span className="font-bold text-3xl text-emerald-300">₹{stats.monthlyRevenue || 0}</span>
+                            <span className="text-gray-300">Coupons Redeemed Today</span>
+                            <span className="font-bold text-3xl text-indigo-400">{stats.redeemedToday}</span>
+                        </div>
+                        <div className="border-t border-white/10 pt-4 mt-2">
+                            <div className="flex justify-between items-center pb-2">
+                                <span className="text-gray-300">Paid Meals Count</span>
+                                <span className="font-bold text-3xl text-cyan-300">{stats.paidCount || 0}</span>
+                            </div>
+                            <div className="flex justify-between items-center pb-2">
+                                <span className="text-gray-300">Total Revenue (Today)</span>
+                                <span className="font-bold text-3xl text-rose-300">₹{stats.revenue || 0}</span>
+                            </div>
+                            <div className="flex justify-between items-center pb-2">
+                                <span className="text-gray-300">Total Revenue (Month)</span>
+                                <span className="font-bold text-3xl text-emerald-300">₹{stats.monthlyRevenue || 0}</span>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-        </div >
     );
 }
