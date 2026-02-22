@@ -43,9 +43,9 @@ export default function Home() {
           <div className={styles.logoWrapper}>
             <div className={styles.logoBg}>
               <img
-                src="/icons/icon-512x512.png"
+                src="/icons/icon.svg?v=2"
                 alt="DigiPlate Logo"
-                style={{ width: '80%', height: '80%', objectFit: 'contain' }}
+                style={{ width: '85%', height: '85%', objectFit: 'contain' }}
               />
             </div>
           </div>
