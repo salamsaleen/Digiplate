@@ -1,16 +1,21 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 // import { UtensilsCrossed, Loader2 } from "lucide-react"; 
 import styles from './home.module.css';
 
 export default function Home() {
+  const [mounted, setMounted] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,11 +47,13 @@ export default function Home() {
         <div className={styles.logoSection}>
           <div className={styles.logoWrapper}>
             <div className={styles.logoBg}>
-              <img
-                src="/icons/icon.svg?v=4"
-                alt="DigiPlate Logo"
-                style={{ width: '85%', height: '85%', objectFit: 'contain' }}
-              />
+              {mounted && (
+                <img
+                  src="/icons/icon.svg?v=5"
+                  alt="DigiPlate Logo"
+                  style={{ width: '85%', height: '85%', objectFit: 'contain' }}
+                />
+              )}
             </div>
           </div>
 
