@@ -425,7 +425,16 @@ export default function CanteenDashboard({ user }: { user: any }) {
 
 
             <div className="glass-panel p-8 max-w-md mx-auto">
-                <h2 className="text-xl font-semibold mb-6 text-center text-white">Scan or Enter Coupon Code</h2>
+                <h2 className="text-xl font-semibold mb-2 text-center text-white">Coupon Validation</h2>
+                <p className="text-gray-400 text-center mb-6 text-sm">Scan or enter code to redeem</p>
+
+                <button
+                    onClick={() => setShowScanner(!showScanner)}
+                    className="w-full mb-6 p-4 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2" /><path d="M17 3h2a2 2 0 0 1 2 2v2" /><path d="M21 17v2a2 2 0 0 1-2 2h-2" /><path d="M3 17v2a2 2 0 0 1 2 2h2" /><path d="M8 12h8" /><path d="M12 8v8" /></svg>
+                    {showScanner ? 'Close Scanner' : 'Validate Coupon'}
+                </button>
 
                 {message && !showMealModal && !showStatusModal && (
                     <div className={`p-4 mb-6 rounded text-center font-bold ${scanResult === 'SUCCESS' ? 'bg-green-500/20 text-green-300 border border-green-500/30' :

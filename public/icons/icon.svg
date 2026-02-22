@@ -1,0 +1,67 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Background Gradient (Deep Navy) -->
+    <radialGradient id="bgGradient" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+      <stop offset="0%" style="stop-color:#0f172a;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#020617;stop-opacity:1" />
+    </radialGradient>
+    
+    <!-- Neon Green Shadow/Glow -->
+    <filter id="greenGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="20" result="blur" />
+      <feFlood flood-color="#22c55e" flood-opacity="0.5" result="color" />
+      <feComposite in="color" in2="blur" operator="in" result="shadow" />
+      <feOffset dx="0" dy="15" result="offsetShadow" />
+      <feMerge>
+        <feMergeNode in="offsetShadow" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+    
+    <!-- White Plate Gradient -->
+    <linearGradient id="whitePlateGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#f1f5f9;stop-opacity:1" />
+    </linearGradient>
+
+    <!-- Metal Polish for Cutlery -->
+    <linearGradient id="metalGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#f8fafc;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#94a3b8;stop-opacity:1" />
+    </linearGradient>
+
+    <!-- Highlight -->
+    <linearGradient id="lightGloss" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:white;stop-opacity:0.3" />
+      <stop offset="100%" style="stop-color:white;stop-opacity:0" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background Base -->
+  <rect width="512" height="512" rx="100" fill="url(#bgGradient)" />
+  
+  <!-- The Plate & Cutlery with Green Glow -->
+  <g filter="url(#greenGlow)">
+    <!-- Base Plate -->
+    <circle cx="256" cy="250" r="170" fill="url(#whitePlateGradient)" />
+    <circle cx="256" cy="250" r="140" fill="none" stroke="#22c55e" stroke-width="2" stroke-opacity="0.1" />
+    
+    <!-- Fork (Left) -->
+    <g transform="translate(175, 170) scale(0.65)">
+      <rect x="25" y="100" width="10" height="150" rx="5" fill="url(#metalGradient)" />
+      <rect x="10" y="20" width="6" height="80" rx="3" fill="url(#metalGradient)" />
+      <rect x="22" y="10" width="6" height="90" rx="3" fill="url(#metalGradient)" />
+      <rect x="34" y="20" width="6" height="80" rx="3" fill="url(#metalGradient)" />
+      <path d="M10 80 Q10 100 30 100 Q50 100 50 80" fill="url(#metalGradient)" />
+    </g>
+
+    <!-- Spoon (Right) -->
+    <g transform="translate(285, 170) scale(0.65)">
+      <rect x="25" y="140" width="12" height="110" rx="6" fill="url(#metalGradient)" />
+      <ellipse cx="31" cy="70" rx="35" ry="55" fill="url(#metalGradient)" />
+    </g>
+
+    <!-- Glossy Reflection -->
+    <path d="M120 180 Q256 90 392 180" stroke="url(#lightGloss)" stroke-width="45" stroke-linecap="round" fill="none" opacity="0.4" />
+  </g>
+</svg>
