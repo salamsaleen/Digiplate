@@ -5,9 +5,9 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    /* Deep Navy Blue Background for "App" feel */
-    background: linear-gradient(135deg, #020617 0%, #1e3a8a 100%);
-    color: #f1f5f9;
+    /* Light Green Background */
+    background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 50%, #6ee7b7 100%);
+    color: #1a2e1a;
     padding: 1.5rem;
     text-align: center;
     font-family: 'Inter', sans-serif;
@@ -22,11 +22,11 @@
     max-width: 26rem;
     width: 100%;
     /* Responsive width */
-    /* Glassmorphism Effect */
-    background: rgba(30, 41, 59, 0.7);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    /* Glassmorphism Effect (light) */
+    background: rgba(255, 255, 255, 0.65);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.9);
     padding: 2.5rem 2rem;
     border-radius: 1.5rem;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
@@ -44,14 +44,14 @@
     font-weight: 900;
     white-space: nowrap;
 
-    /* Metallic Gradient */
-    background: linear-gradient(180deg, #334155 0%, #1e293b 50%, #0f172a 51%, #1e293b 100%);
+    /* Dark Green Gradient for light bg */
+    background: linear-gradient(180deg, #064e3b 0%, #065f46 50%, #047857 51%, #059669 100%);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
 
     /* Shining Shadow */
-    filter: drop-shadow(0 0 20px rgba(0, 0, 0, 0.8));
+    filter: drop-shadow(0 0 20px rgba(0, 0, 0, 0.15));
 
     z-index: 0;
     pointer-events: none;
@@ -89,8 +89,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 15px 35px -10px rgba(0, 0, 0, 0.5), 
-                inset 0 2px 4px rgba(255, 255, 255, 0.05);
+    box-shadow: 0 15px 35px -10px rgba(0, 0, 0, 0.5),
+        inset 0 2px 4px rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.1);
     position: relative;
     overflow: hidden;
@@ -139,7 +139,7 @@
     font-size: 2rem;
     font-weight: 800;
     letter-spacing: -0.025em;
-    color: white;
+    color: #064e3b;
     margin: 0;
 }
 
@@ -168,7 +168,7 @@
     display: block;
     font-size: 0.85rem;
     font-weight: 600;
-    color: #cbd5e1;
+    color: #065f46;
     margin-bottom: 0.5rem;
     margin-left: 0.25rem;
 }
@@ -176,35 +176,35 @@
 .input {
     width: 100%;
     padding: 1rem 1.25rem;
-    background-color: rgba(15, 23, 42, 0.6);
-    border: 1px solid #334155;
+    background-color: rgba(255, 255, 255, 0.8);
+    border: 1px solid #a7f3d0;
     border-radius: 0.75rem;
-    color: white;
+    color: #1a2e1a;
     font-size: 1rem;
     transition: all 0.2s ease;
 }
 
 .input:focus {
     outline: none;
-    border-color: #60a5fa;
-    background-color: rgba(15, 23, 42, 0.8);
-    box-shadow: 0 0 0 4px rgba(96, 165, 250, 0.15);
+    border-color: #059669;
+    background-color: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 0 0 4px rgba(5, 150, 105, 0.15);
 }
 
 .input::placeholder {
-    color: #64748b;
+    color: #9ca3af;
 }
 
 .button {
     width: 100%;
     padding: 1rem;
     margin-top: 1rem;
-    background: linear-gradient(135deg, #3b82f6 0%, #4f46e5 100%);
+    background: linear-gradient(135deg, #059669 0%, #064e3b 100%);
     color: white;
     font-weight: 700;
     font-size: 1rem;
     border-radius: 0.75rem;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.15);
     transition: all 0.2s;
     cursor: pointer;
     border: none;
@@ -238,7 +238,7 @@
     position: absolute;
     bottom: 1.5rem;
     font-size: 0.75rem;
-    color: #64748b;
+    color: #065f46;
     font-weight: 500;
     letter-spacing: 0.05em;
     opacity: 0.8;
