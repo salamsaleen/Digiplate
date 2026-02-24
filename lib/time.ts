@@ -1,12 +1,21 @@
 export function getISTDate(): Date {
     const now = new Date();
-    const istString = now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
-    return new Date(istString);
+    // UTC time + 5 hours 30 minutes
+    const istOffset = 5.5 * 60 * 60 * 1000;
+    const istDate = new Date(now.getTime() + istOffset);
+    return istDate;
 }
 
-export function isBookingOpen(): { open: boolean; message?: string } {
+export function isBookingOpen(email?: string): { open: boolean; message?: string } {
     const istDate = getISTDate();
     const hours = istDate.getHours();
+
+    // Bypass for test users
+    const testers = ['teststudent@digiplate.com'];
+    if (email && testers.includes(email.toLowerCase())) {
+        console.log(`[TIME_LOG] Bypass granted for tester: ${email}`);
+        return { open: true };
+    }
 
     console.log(`[TIME_LOG] Checking Booking Time. IST Hours: ${hours}`);
 

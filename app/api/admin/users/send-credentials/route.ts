@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { sendEmail, sendSMS } from '@/lib/notify';
+import { sendEmail, sendWhatsApp } from '@/lib/notify';
 import User from '@/models/User';
 import connectToDatabase from '@/lib/db';
 
@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
         // 2. Send SMS if phone and password provided
         if (phone && password) {
             const message = `Welcome to DigiPlate, ${name || 'Student'}! Your login: Email: ${email}, Password: ${password}. Login at: ${process.env.NEXTAUTH_URL}`;
-            await sendSMS(phone, message);
+            await sendWhatsApp(phone, message);
         }
 
         return NextResponse.json({ message: 'Credentials sent successfully' });

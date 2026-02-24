@@ -3,6 +3,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import Razorpay from 'razorpay';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { isBookingOpen, getNextLunchDate } from '@/lib/time';
+import connectToDatabase from '@/lib/db';
+import Coupon from '@/models/Coupon';
 
 export async function POST(req: NextRequest) {
     try {
@@ -12,11 +15,32 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
         }
 
+        const user = session.user as any;
+
+        // Check if user has an existing polled/approved coupon for tomorrow
+        await connectToDatabase();
+        const lunchDate = getNextLunchDate();
+        const start = new Date(lunchDate); start.setHours(0, 0, 0, 0);
+        const end = new Date(lunchDate); end.setHours(23, 59, 59, 999);
+
+        const existing = await Coupon.findOne({
+            studentId: user.id,
+            validForDate: { $gte: start, $lt: end },
+            status: { $in: ['polled', 'approved'] }
+        });
+
+        // If no existing coupon that can be paid for, check if polling is open
+        if (!existing) {
+            const { open, message: timeMsg } = isBookingOpen(user.email);
+            if (!open) {
+                return NextResponse.json({ message: timeMsg }, { status: 400 });
+            }
+        }
+
         if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
             return NextResponse.json({ message: 'Razorpay API Keys missing' }, { status: 500 });
         }
 
-        const user = session.user as any;
         console.log('[VERIFIED_QR_CREATE_BEFORE_RAZORPAY]');
         const razorpay = new Razorpay({
             key_id: process.env.RAZORPAY_KEY_ID,

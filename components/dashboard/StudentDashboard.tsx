@@ -32,7 +32,8 @@ export default function StudentDashboard({ user }: { user: any }) {
         pollRef.current = setInterval(async () => {
             try {
                 const res = await fetch(`/api/payment/qr-status?paymentLinkId=${paymentLinkId}&mealType=${settings.mealType}`);
-                const data = await res.json();
+                if (!res.ok) return; // Silent skip for polling error
+                const data = await res.json().catch(() => ({}));
                 if (data.paid) {
                     stopPolling();
                     setShowQrModal(false);
@@ -57,7 +58,7 @@ export default function StudentDashboard({ user }: { user: any }) {
         try {
             const res = await fetch('/api/coupon/book');
             if (res.ok) {
-                const data = await res.json();
+                const data = await res.json().catch(() => ({}));
                 if (data.coupon) setCoupon(data.coupon);
             }
         } catch (e) { console.error(e); }
@@ -94,7 +95,7 @@ export default function StudentDashboard({ user }: { user: any }) {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ action, mealType: mealToCheck })
             });
-            const data = await res.json();
+            const data = await res.json().catch(() => ({ message: 'Server error (HTML response)' }));
             if (res.ok) {
                 if (action === 'poll') setMessage('Poll Submitted! Now request approval.');
                 if (action === 'request') setMessage('Request Sent! Waiting for Admin Approval.');
@@ -123,8 +124,8 @@ export default function StudentDashboard({ user }: { user: any }) {
                 const err = await res.json().catch(() => ({}));
                 throw new Error(err.message || 'Failed to create payment');
             }
-            const data = await res.json();
-            setShortUrl(data.shortUrl);       // e.g. https://rzp.io/l/abc123
+            const data = await res.json().catch(() => ({}));
+            setShortUrl(data.shortUrl);
             setPaymentLinkId(data.paymentLinkId);
             setShowPaymentModal(false);
             setShowQrModal(true);
@@ -201,13 +202,86 @@ export default function StudentDashboard({ user }: { user: any }) {
         if (coupon.status === 'active') {
             const mealDisplay = coupon.mealType === 'Rice' ? 'Rice (ചോറ്)' : coupon.mealType === 'Porridge' ? 'Kanji (കഞ്ഞി)' : (coupon.mealType || 'Rice (ചോറ്)');
             const validDate = new Date(coupon.validForDate);
+
+            const downloadCouponJPEG = () => {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                if (!ctx) return;
+
+                canvas.width = 600;
+                canvas.height = 900;
+
+                // BG
+                ctx.fillStyle = '#0f172a';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                // Header
+                ctx.fillStyle = '#22c55e';
+                ctx.font = 'bold 50px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('MEAL COUPON', canvas.width / 2, 80);
+
+                ctx.fillStyle = '#94a3b8';
+                ctx.font = '20px Arial';
+                ctx.fillText('DIGIPLATE VERIFICATION', canvas.width / 2, 120);
+
+                // QR Code
+                const svg = document.querySelector('.qr-container svg');
+                if (svg) {
+                    const xml = new XMLSerializer().serializeToString(svg);
+                    const svg64 = btoa(unescape(encodeURIComponent(xml)));
+                    const image64 = 'data:image/svg+xml;base64,' + svg64;
+
+                    const img = new Image();
+                    img.onload = () => {
+                        // White square for QR
+                        ctx.fillStyle = '#ffffff';
+                        ctx.fillRect(canvas.width / 2 - 160, 160, 320, 320);
+                        ctx.drawImage(img, canvas.width / 2 - 150, 170, 300, 300);
+
+                        // Info
+                        ctx.textAlign = 'left';
+                        ctx.fillStyle = '#ffffff';
+                        ctx.font = 'bold 32px Arial';
+                        ctx.fillText(`Student: ${user.name}`, 60, 560);
+
+                        ctx.font = 'bold 32px Arial';
+                        ctx.fillStyle = '#f97316'; // orange-500
+                        ctx.fillText(`Meal: ${mealDisplay}`, 60, 620);
+
+                        ctx.fillStyle = '#ffffff';
+                        ctx.font = '28px Arial';
+                        ctx.fillText(`Date: ${validDate.toLocaleDateString()}`, 60, 680);
+                        ctx.fillText(`Code: ${coupon.code}`, 60, 740);
+
+                        ctx.fillStyle = '#94a3b8';
+                        ctx.font = '24px Arial';
+                        ctx.fillText(`Valid until 3:00 PM`, 60, 800);
+
+                        // Branding footer
+                        ctx.fillStyle = '#1e293b';
+                        ctx.fillRect(0, 840, 600, 60);
+                        ctx.fillStyle = '#ffffff';
+                        ctx.font = 'bold 24px Arial';
+                        ctx.textAlign = 'center';
+                        ctx.fillText('N M S M GOVT COLLEGE KALPETTA', canvas.width / 2, 880);
+
+                        const link = document.createElement('a');
+                        link.download = `Coupon_${coupon.code}.jpg`;
+                        link.href = canvas.toDataURL('image/jpeg', 0.9);
+                        link.click();
+                    };
+                    img.src = image64;
+                }
+            };
+
             return (
                 <div className="glass-panel p-6 flex flex-col items-center max-w-sm mx-auto border-2 border-green-500/30">
                     <div className="w-full border-b border-white/10 pb-4 mb-4 text-center">
                         <h2 className="text-xl font-bold text-green-400">MEAL COUPON</h2>
                         <p className="text-xs text-green-300/70 uppercase tracking-widest mt-1">DigiPlate Verification</p>
                     </div>
-                    <div className="bg-white p-4 rounded-lg border-4 border-white shadow-2xl mb-6">
+                    <div className="bg-white p-4 rounded-lg border-4 border-white shadow-2xl mb-6 qr-container">
                         <QRCode value={coupon.code} size={180} />
                     </div>
                     <div className="w-full space-y-3 text-left bg-black/20 p-4 rounded-lg">
@@ -237,6 +311,14 @@ export default function StudentDashboard({ user }: { user: any }) {
                             <p className="text-xs text-gray-500 font-mono text-center tracking-widest">{coupon.code}</p>
                         </div>
                     </div>
+
+                    <button
+                        onClick={downloadCouponJPEG}
+                        className="mt-6 w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg flex items-center justify-center gap-2 transition-all border border-indigo-400/50"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" x2="12" y1="3" y2="15" /></svg>
+                        Download Coupon (JPEG)
+                    </button>
                 </div>
             );
         }

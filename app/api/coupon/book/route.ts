@@ -7,6 +7,7 @@ import Coupon from '@/models/Coupon';
 import SystemSettings from '@/models/SystemSettings';
 import User from '@/models/User';
 import { isBookingOpen, getNextLunchDate } from '@/lib/time';
+import { sendWhatsApp } from '@/lib/notify';
 
 export async function POST(req: NextRequest) {
     try {
@@ -15,17 +16,13 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ message: 'Unauthorized' }, { status: 403 });
         }
 
-        const { open, message: timeMsg } = isBookingOpen();
-        if (!open) {
-            return NextResponse.json({ message: timeMsg }, { status: 400 });
-        }
-
         await connectToDatabase();
         const body = await req.json();
-        const action = body.action || 'poll'; // 'poll', 'request', 'pay'
+        const action = body.action || 'poll'; // 'poll', 'pay_direct', 'pay'
         const mealType = body.mealType || 'Rice';
 
         const studentId = (session.user as any).id;
+        const userEmail = (session.user as any).email;
         const lunchDate = getNextLunchDate();
 
         const existing = await Coupon.findOne({
@@ -37,11 +34,18 @@ export async function POST(req: NextRequest) {
             status: { $in: ['polled', 'requested', 'approved', 'active', 'redeemed'] }
         });
 
+        if (action === 'poll' || action === 'pay_direct') {
+            const { open, message: timeMsg } = isBookingOpen(userEmail);
+            if (!open) {
+                return NextResponse.json({ message: timeMsg }, { status: 400 });
+            }
+        }
+
         if (action === 'poll') {
             if (existing) {
                 return NextResponse.json({ message: `Already polled/requested. Status: ${existing.status}` }, { status: 400 });
             }
-            // Get System Settings for the date (ignoring time via range)
+            // Get System Settings for the date
             const settingsStartDate = new Date(lunchDate);
             settingsStartDate.setHours(0, 0, 0, 0);
             const settingsEndDate = new Date(lunchDate);
@@ -64,18 +68,23 @@ export async function POST(req: NextRequest) {
                 mealType,
                 sideDishes
             });
-            return NextResponse.json({ message: 'Polled successfully!', coupon: newCoupon }, { status: 201 });
-        } else if (action === 'pay_direct') {
-            // New Flow: User Polls and Pays immediately.
 
-            // Check if already has an ACTIVE or REDEEMED coupon
+            // Send WhatsApp Notification for Poll
+            const user = await User.findById(studentId);
+            if (user && user.phone) {
+                const dateStr = new Date(lunchDate).toLocaleDateString();
+                await sendWhatsApp(user.phone, `Hi ${user.name}, your poll for ${mealType} on ${dateStr} has been recorded! Pay ₹10 to confirm your meal. 🍽️`);
+            }
+
+            return NextResponse.json({ message: 'Polled successfully!', coupon: newCoupon }, { status: 201 });
+
+        } else if (action === 'pay_direct') {
             if (existing) {
                 if (existing.status === 'active' || existing.status === 'redeemed' || existing.status === 'approved') {
                     return NextResponse.json({ message: 'You already have a valid coupon for tomorrow.', coupon: existing }, { status: 400 });
                 }
             }
 
-            // Wallet Check & Deduction
             const user = await User.findById(studentId);
             if (!user) return NextResponse.json({ message: 'User not found' }, { status: 404 });
 
@@ -83,13 +92,10 @@ export async function POST(req: NextRequest) {
                 return NextResponse.json({ message: 'Insufficient Wallet Balance (Required: ₹10)' }, { status: 400 });
             }
 
-            // Deduct & Create/Update
             user.walletBalance -= 10;
             await user.save();
 
             const code = Math.random().toString(36).substring(2, 10).toUpperCase();
-
-            // Get System Settings for the date (ignoring time via range) to include side dishes
             const settingsStartDate = new Date(lunchDate);
             settingsStartDate.setHours(0, 0, 0, 0);
             const settingsEndDate = new Date(lunchDate);
@@ -98,19 +104,14 @@ export async function POST(req: NextRequest) {
             const settings = await SystemSettings.findOne({
                 date: { $gte: settingsStartDate, $lt: settingsEndDate }
             });
-
-            // console.log(`[BOOK POLL] Settings Found: ${!!settings}, SideDishes: ${JSON.stringify(settings?.sideDishes)}\n`);
-
             const sideDishes = settings ? settings.sideDishes : ['പപ്പടം', 'അച്ചാർ', 'ഉപ്പേരി'];
 
-            // If existing 'polled' entry exists, update it. If not, create new.
             let coupon;
             if (existing) {
                 existing.status = 'active';
-                // existing.code = code; // Keep original code? Or regenerate? Let's regenerate to be safe/fresh.
                 existing.code = code;
                 existing.mealType = mealType;
-                existing.sideDishes = sideDishes; // Update sides
+                existing.sideDishes = sideDishes;
                 await existing.save();
                 coupon = existing;
             } else {
@@ -118,26 +119,30 @@ export async function POST(req: NextRequest) {
                     code,
                     studentId,
                     department: (session.user as any).department,
-                    status: 'active', // Direct to Active
+                    status: 'active',
                     validForDate: lunchDate,
                     originalOwnerId: studentId,
                     mealType,
-                    sideDishes // Include sides
+                    sideDishes
                 });
+            }
+
+            // Send WhatsApp Notification for Payment/Coupon
+            if (user && user.phone) {
+                const dateStr = new Date(lunchDate).toLocaleDateString();
+                await sendWhatsApp(user.phone, `Success! 🎉 Your payment is verified. Coupon ${coupon.code} for ${mealType} on ${dateStr} is now ACTIVE. Download it from your dashboard. 🍽️`);
             }
 
             return NextResponse.json({ message: 'Payment Successful! Coupon Active.', coupon }, { status: 201 });
 
         } else if (action === 'pay') {
-            // User wants to pay for an APPROVED coupon
             if (!existing) {
-                return NextResponse.json({ message: 'No APPROVED coupon found for this date.' }, { status: 404 });
+                return NextResponse.json({ message: 'No polled/approved coupon found for this date.' }, { status: 404 });
             }
-            if (existing.status !== 'approved') {
+            if (existing.status !== 'approved' && existing.status !== 'polled') {
                 return NextResponse.json({ message: `Coupon is ${existing.status}, cannot pay.` }, { status: 400 });
             }
 
-            // Handle Payment Logic (Deduct 10)
             const user = await User.findById(studentId);
             if (user.walletBalance < 10) {
                 return NextResponse.json({ message: 'Insufficient Wallet Balance' }, { status: 400 });
@@ -145,9 +150,14 @@ export async function POST(req: NextRequest) {
             user.walletBalance -= 10;
             await user.save();
 
-            // Activate Coupon
             existing.status = 'active';
             await existing.save();
+
+            // Send WhatsApp Notification
+            if (user && user.phone) {
+                const dateStr = new Date(existing.validForDate).toLocaleDateString();
+                await sendWhatsApp(user.phone, `Success! 🎉 Your payment for ${existing.mealType || 'Lunch'} on ${dateStr} is verified. Coupon ${existing.code} is now ACTIVE! 🍽️`);
+            }
 
             return NextResponse.json({ message: 'Payment Successful! Coupon Active.', coupon: existing });
         }
@@ -166,7 +176,6 @@ export async function GET(req: NextRequest) {
     await connectToDatabase();
     const studentId = (session.user as any).id;
 
-    // Get latest coupon (active, requested, or approved, or POLLED)
     const coupon = await Coupon.findOne({
         studentId,
         status: { $in: ['active', 'requested', 'approved', 'polled'] }

@@ -25,6 +25,30 @@ export async function sendSMS(phone: string, message: string) {
     });
 }
 
+export async function sendWhatsApp(phone: string, message: string) {
+    if (!client) {
+        console.log(`[WhatsApp MOCK] To ${phone}: ${message}`);
+        return;
+    }
+    const to = `whatsapp:${phone.startsWith('+') ? phone : '+91' + phone}`;
+    const from = `whatsapp:${process.env.TWILIO_PHONE_NUMBER}`;
+
+    console.log(`[WhatsApp Attempt] From: ${from}, To: ${to}`);
+
+    try {
+        await client.messages.create({
+            body: message,
+            from: from,
+            to: to,
+        });
+        console.log(`[WhatsApp SUCCESS] Sent to ${to}`);
+    } catch (error: any) {
+        console.error(`[WhatsApp ERROR] Failed to send to ${to}:`, error.message);
+        // We don't throw here to prevent the whole API request from failing, 
+        // but it will be visible in the server logs.
+    }
+}
+
 export async function sendEmail(email: string, subject: string, html: string) {
     if (!transporter) {
         console.log(`[EMAIL MOCK] To ${email}, Subject: ${subject}`);

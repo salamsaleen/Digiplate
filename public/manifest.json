@@ -4,27 +4,27 @@
   "description": "Premium Digital Canteen Coupon System",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0b121e",
-  "theme_color": "#0b121e",
+  "background_color": "#0b1a32",
+  "theme_color": "#0b1a32",
   "orientation": "portrait",
   "scope": "/",
   "icons": [
     {
-      "src": "/icons/icon-192x192.png?v=5",
+      "src": "/logo_plate_v2.jpg",
       "sizes": "192x192",
-      "type": "image/png",
+      "type": "image/jpeg",
       "purpose": "any maskable"
     },
     {
-      "src": "/icons/icon-512x512.png?v=5",
+      "src": "/logo_plate_v2.jpg",
       "sizes": "512x512",
-      "type": "image/png",
+      "type": "image/jpeg",
       "purpose": "any maskable"
     },
     {
-      "src": "/icons/icon.svg?v=5",
+      "src": "/logo_plate_v2.jpg",
       "sizes": "any",
-      "type": "image/svg+xml",
+      "type": "image/jpeg",
       "purpose": "any"
     }
   ]
