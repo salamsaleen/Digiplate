@@ -1,7 +1,9 @@
 export function getISTDate(): Date {
     const now = new Date();
-    const istString = now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
-    return new Date(istString);
+    // UTC time + 5 hours 30 minutes
+    const istOffset = 5.5 * 60 * 60 * 1000;
+    const istDate = new Date(now.getTime() + istOffset);
+    return istDate;
 }
 
 export function isBookingOpen(email?: string): { open: boolean; message?: string } {

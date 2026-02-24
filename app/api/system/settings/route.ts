@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
@@ -5,6 +6,8 @@ import { authOptions } from '@/lib/auth';
 import connectToDatabase from '@/lib/db';
 import SystemSettings from '@/models/SystemSettings';
 import { triggerAutomatedReminders } from '@/lib/automation';
+
+import { getISTDate } from '@/lib/time';
 
 export async function GET(req: NextRequest) {
     try {
@@ -21,21 +24,24 @@ export async function GET(req: NextRequest) {
         const url = new URL(req.url);
         const dateParam = url.searchParams.get('date');
 
-        let targetDate = new Date();
+        let targetDate: Date;
         if (dateParam) {
             targetDate = new Date(dateParam);
         } else {
-            // Default to tomorrow
+            // Default to tomorrow (IST)
+            targetDate = getISTDate();
             targetDate.setDate(targetDate.getDate() + 1);
         }
-        targetDate.setHours(0, 0, 0, 0);
 
-        let settings = await SystemSettings.findOne({ date: targetDate });
+        // Normalize to UTC Midnight of the target day
+        const normalizedDate = new Date(Date.UTC(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), 0, 0, 0, 0));
+
+        let settings = await SystemSettings.findOne({ date: normalizedDate });
 
         if (!settings) {
             // Return default settings if none exist for that day
             return NextResponse.json({
-                date: targetDate,
+                date: normalizedDate,
                 mealType: 'Rice', // Default
                 isOpen: true,
                 closingReason: '',
@@ -63,15 +69,11 @@ export async function POST(req: NextRequest) {
         const body = await req.json();
         const { date, mealType, isOpen, closingReason, sideDishes } = body; // Add sideDishes
 
-        let targetDate = new Date(date);
-        targetDate.setHours(0, 0, 0, 0);
-
-        // console.log(`[SETTINGS POST] Date: ${targetDate.toISOString()}, Body: ${JSON.stringify(body)}\n`);
-        const schemaCheck = SystemSettings.schema.path('sideDishes');
-        // console.log(`[SETTINGS DEBUG] Schema sideDishes path: ${!!schemaCheck}\n`);
+        let sourceDate = new Date(date);
+        const normalizedDate = new Date(Date.UTC(sourceDate.getFullYear(), sourceDate.getMonth(), sourceDate.getDate(), 0, 0, 0, 0));
 
         const settings = await SystemSettings.findOneAndUpdate(
-            { date: targetDate },
+            { date: normalizedDate },
             {
                 mealType,
                 isOpen,
