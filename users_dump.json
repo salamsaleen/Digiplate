@@ -8,13 +8,13 @@
   {
     "email": "cs_admin@digiplate.com",
     "role": "dept_admin",
-    "department": "bsc.cs",
+    "department": "cs",
     "name": "CS HOD"
   },
   {
     "email": "student@digiplate.com",
     "role": "student",
-    "department": "bsc.cs",
+    "department": "cs",
     "name": "Arjun Student"
   },
   {
@@ -26,61 +26,97 @@
   {
     "email": "student1@digiplate.com",
     "role": "student",
-    "department": "bsc.cs",
+    "department": "cs",
     "name": "Test Student 1"
   },
   {
     "email": "student2@digiplate.com",
     "role": "student",
-    "department": "bsc.cs",
+    "department": "cs",
     "name": "Test Student 2"
   },
   {
     "email": "student3@digiplate.com",
     "role": "student",
-    "department": "bsc.cs",
+    "department": "cs",
     "name": "Test Student 3"
   },
   {
     "email": "student4@digiplate.com",
     "role": "student",
-    "department": "bsc.cs",
+    "department": "cs",
     "name": "Test Student 4"
   },
   {
     "email": "student5@digiplate.com",
     "role": "student",
-    "department": "bsc.cs",
+    "department": "cs",
     "name": "Test Student 5"
   },
   {
     "email": "student6@digiplate.com",
     "role": "student",
-    "department": "bsc.cs",
+    "department": "cs",
     "name": "Test Student 6"
   },
   {
     "email": "student7@digiplate.com",
     "role": "student",
-    "department": "bsc.cs",
+    "department": "cs",
     "name": "Test Student 7"
   },
   {
     "email": "student8@digiplate.com",
     "role": "student",
-    "department": "bsc.cs",
+    "department": "cs",
     "name": "Test Student 8"
   },
   {
     "email": "student9@digiplate.com",
     "role": "student",
-    "department": "bsc.cs",
+    "department": "cs",
     "name": "Test Student 9"
   },
   {
     "email": "student10@digiplate.com",
     "role": "student",
-    "department": "bsc.cs",
+    "department": "cs",
     "name": "Test Student 10"
+  },
+  {
+    "email": "salamsaleena021@gmail.com",
+    "role": "dept_admin",
+    "department": "chemistry",
+    "name": "Abdul salam"
+  },
+  {
+    "email": "salamuuabu431@digiplate.com",
+    "role": "dept_admin",
+    "department": "cs",
+    "name": "me"
+  },
+  {
+    "email": "digiplatenmsm@gmail.com",
+    "role": "dept_admin",
+    "department": "chemistry",
+    "name": "me"
+  },
+  {
+    "email": "bijiljosepho@gmail.com",
+    "role": "dept_admin",
+    "department": "history",
+    "name": "bujil"
+  },
+  {
+    "email": "bijiljoseph29@gmail.com",
+    "role": "dept_admin",
+    "department": "commerce",
+    "name": "Bjil"
+  },
+  {
+    "email": "teststudent@digiplate.com",
+    "role": "student",
+    "department": "cs",
+    "name": "Test Student (Automation)"
   }
 ]

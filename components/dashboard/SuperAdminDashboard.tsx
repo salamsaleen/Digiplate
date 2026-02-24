@@ -1,9 +1,13 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import Link from 'next/link';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 export default function SuperAdminDashboard({ user }: { user: any }) {
-    const [showForm, setShowForm] = useState(false);
+    const [view, setView] = useState<'home' | 'register' | 'students' | 'admins'>('home');
+    const [filterDept, setFilterDept] = useState<string>('all');
+    const [students, setStudents] = useState<any[]>([]);
     const [formData, setFormData] = useState({
         name: '',
         email: '',
@@ -16,7 +20,17 @@ export default function SuperAdminDashboard({ user }: { user: any }) {
 
     useEffect(() => {
         fetchStats();
+        fetchStudents();
     }, []);
+
+    const fetchStudents = async () => {
+        try {
+            const res = await fetch('/api/users');
+            const data = await res.json();
+            console.log('Fetched users:', data);
+            if (Array.isArray(data)) setStudents(data);
+        } catch (error) { console.error(error); }
+    };
 
     const fetchStats = async () => {
         try {
@@ -26,30 +40,152 @@ export default function SuperAdminDashboard({ user }: { user: any }) {
         } catch (error) { console.error(error); }
     };
 
+    const [showMenu, setShowMenu] = useState(false);
+    const menuRef = useRef<HTMLDivElement>(null);
+
     const departments = [
         'cs', 'chemistry', 'commerce', 'history', 'economics', 'jmc', 'canteen'
     ];
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setMessage('Creating admin...');
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+                setShowMenu(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const generatePDF = async (period: 'daily' | 'weekly' | 'monthly') => {
+        setShowMenu(false);
+        setMessage(`Generating ${period} report...`);
         try {
-            const res = await fetch('/api/users', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData),
-            });
+            const res = await fetch(`/api/admin/reports?period=${period}`);
+            if (!res.ok) {
+                const errorData = await res.json().catch(() => ({ message: 'Report API Error' }));
+                throw new Error(errorData.message || 'Report generation failed');
+            }
             const data = await res.json();
+
+            const doc = new jsPDF();
+            const title = `DigiPlate - ${period.toUpperCase()} Status Report`;
+            const dateStr = new Date().toLocaleDateString();
+
+            doc.setFontSize(20);
+            doc.setTextColor(40);
+            doc.text(title, 14, 22);
+            doc.setFontSize(10);
+            doc.text(`Generated on: ${dateStr}`, 14, 30);
+            doc.text(`Period: ${new Date(data.startDate).toLocaleDateString()} to ${new Date(data.endDate).toLocaleDateString()}`, 14, 35);
+
+            // 1. Financial Status
+            doc.setFontSize(16);
+            doc.text('Financial Summary', 14, 50);
+            autoTable(doc, {
+                startY: 55,
+                head: [['Metric', 'Value']],
+                body: [
+                    ['Total Revenue', `Rs. ${data.summary.totalRevenue}`],
+                    ['Coupons Issued', data.summary.totalCoupons],
+                    ['Coupons Redeemed', data.summary.redeemedCount],
+                ],
+            });
+
+            // 2. Department Breakdown
+            doc.setFontSize(16);
+            doc.text('Department-wise Status', 14, (doc as any).lastAutoTable.finalY + 15);
+            autoTable(doc, {
+                startY: (doc as any).lastAutoTable.finalY + 20,
+                head: [['Department', 'Students', 'Coupons Issued', 'Revenue']],
+                body: data.deptStats.map((d: any) => [
+                    getDeptDisplayName(d.dept),
+                    d.students,
+                    d.coupons,
+                    `Rs. ${d.revenue}`
+                ]),
+            });
+
+            // 3. Admin Roles
+            doc.addPage();
+            doc.setFontSize(16);
+            doc.text('Registered Admins & Staff', 14, 22);
+            autoTable(doc, {
+                startY: 30,
+                head: [['Name', 'Email', 'Role', 'Department']],
+                body: data.admins.map((a: any) => [
+                    a.name,
+                    a.email,
+                    a.role,
+                    getDeptDisplayName(a.department)
+                ]),
+            });
+
+            doc.save(`DigiPlate_Report_${period}_${dateStr}.pdf`);
+            setMessage('✅ Report downloaded successfully!');
+            setTimeout(() => setMessage(''), 3000);
+        } catch (error: any) {
+            console.error(error);
+            setMessage(`ERROR: ${error.message}`);
+        }
+    };
+
+    const handleDelete = async (id: string) => {
+        if (!confirm('Are you sure you want to delete this student?')) return;
+        try {
+            const res = await fetch(`/api/users?id=${id}`, { method: 'DELETE' });
             if (res.ok) {
-                setMessage(`SUCCESS: Admin created! Credentials sent.`);
-                setFormData({ ...formData, name: '', email: '', phone: '' });
+                setMessage('Student deleted');
+                fetchStudents();
                 fetchStats();
             } else {
-                setMessage(`ERROR: ${data.message}`);
+                setMessage('ERROR: Failed to delete');
             }
-        } catch (err: any) {
-            setMessage(`ERROR: ${err.message}`);
+        } catch (err) { setMessage('ERROR: Network error'); }
+    };
+
+    const getDeptDisplayName = (dept: string) => {
+        const map: any = {
+            'cs': 'Computer Science',
+            'chemistry': 'Chemistry',
+            'commerce': 'Commerce',
+            'history': 'History',
+            'economics': 'Economics',
+            'jmc': 'JMC',
+            'canteen': 'Canteen'
+        };
+        return map[dept] || dept?.toUpperCase() || 'Other';
+    };
+
+    const isDeptMatch = (studentDept: string, filterDept: string) => {
+        return studentDept?.toLowerCase().trim() === filterDept?.toLowerCase().trim();
+    };
+
+    const shuffleArray = (array: any[]) => {
+        const newArray = [...array];
+        for (let i = newArray.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
         }
+        return newArray;
+    };
+
+    const randomizedStudents = useMemo(() => {
+        return shuffleArray(students.filter(s => s.role?.toLowerCase().trim() === 'student'));
+    }, [students]);
+
+    const adminUsers = useMemo(() => {
+        return students.filter(s => ['dept_admin', 'canteen_staff'].includes(s.role?.toLowerCase().trim()));
+    }, [students]);
+
+    const getFilteredStudents = () => {
+        if (!students || !Array.isArray(students)) return [];
+        if (filterDept === 'all') {
+            return randomizedStudents;
+        }
+        return students.filter(s => {
+            return isDeptMatch(s.department, filterDept) && s.role?.toLowerCase().trim() === 'student';
+        });
     };
 
     return (
@@ -59,25 +195,168 @@ export default function SuperAdminDashboard({ user }: { user: any }) {
                 <span className="text-sm font-medium">Back to Home</span>
             </Link>
 
+            <div className="absolute top-4 right-4 z-50" ref={menuRef}>
+                <button
+                    onClick={() => setShowMenu(!showMenu)}
+                    className="p-2 bg-gray-800/80 backdrop-blur-md rounded-full border border-gray-700 hover:bg-gray-700/80 text-gray-300 transition-all shadow-lg"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1" /><circle cx="12" cy="5" r="1" /><circle cx="12" cy="19" r="1" /></svg>
+                </button>
+                {showMenu && (
+                    <div className="absolute right-0 mt-2 w-48 bg-gray-900 border border-gray-700 rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                        <div className="p-2 text-xs font-bold text-gray-500 uppercase border-b border-gray-800">Download Reports</div>
+                        <button onClick={() => generatePDF('daily')} className="w-full text-left px-4 py-3 text-sm text-gray-300 hover:bg-indigo-600 hover:text-white transition-colors flex items-center gap-2">
+                            <span>📄</span> Daily Status
+                        </button>
+                        <button onClick={() => generatePDF('weekly')} className="w-full text-left px-4 py-3 text-sm text-gray-300 hover:bg-indigo-600 hover:text-white transition-colors flex items-center gap-2">
+                            <span>📅</span> Weekly Status
+                        </button>
+                        <button onClick={() => generatePDF('monthly')} className="w-full text-left px-4 py-3 text-sm text-gray-300 hover:bg-indigo-600 hover:text-white transition-colors flex items-center gap-2">
+                            <span>📊</span> Monthly Status
+                        </button>
+                    </div>
+                )}
+            </div>
+
+            <div className="absolute top-4 right-16 z-50">
+                <button
+                    onClick={async () => {
+                        if (!confirm('Send polling reminders to all pending students via WhatsApp?')) return;
+                        setMessage('Sending reminders...');
+                        try {
+                            const res = await fetch('/api/admin/notify-polls', { method: 'POST' });
+                            let data;
+                            try {
+                                data = await res.json();
+                            } catch (e) {
+                                data = { message: 'Failed to parse server response' };
+                            }
+                            if (res.ok) {
+                                setMessage(`✅ ${data.message}`);
+                                setTimeout(() => setMessage(''), 5000);
+                            } else {
+                                setMessage(`❌ Error: ${data.message}`);
+                            }
+                        } catch (err) { setMessage('❌ Network error'); }
+                    }}
+                    className="flex items-center gap-2 px-4 py-2 bg-indigo-600/80 backdrop-blur-md rounded-full border border-indigo-400/50 hover:bg-indigo-500 text-white transition-all shadow-lg text-xs font-bold"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m22 2-7 20-4-9-9-4Z" /><path d="M22 2 11 13" /></svg>
+                    Send Reminders
+                </button>
+            </div>
+
             <h1 className="text-3xl font-bold mb-6 text-white mt-8">Super Admin Dashboard</h1>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="md:col-span-2">
-                    <button
-                        onClick={() => setShowForm(!showForm)}
-                        className="w-full p-4 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
-                        {showForm ? 'Hide Registration' : 'Register Admins'}
-                    </button>
+            {message && message.includes('Generating') && (
+                <div className="mb-4 p-3 bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 rounded-xl animate-pulse text-sm text-center">
+                    {message}
                 </div>
+            )}
 
-                {showForm && (
+            {view === 'home' ? (
+                <div className="space-y-8 animate-fade-in">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <button
+                            onClick={() => setView('register')}
+                            className="w-full py-6 bg-[#064e3b] hover:bg-[#065f46] text-white font-bold rounded-2xl shadow-2xl transition-all transform hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-4 text-2xl border border-green-400/20"
+                        >
+                            <div className="bg-green-400/20 p-3 rounded-xl border border-green-400/30">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
+                            </div>
+                            <span>Register Admins</span>
+                        </button>
+
+                        <button
+                            onClick={() => setView('students')}
+                            className="w-full py-6 bg-yellow-600 hover:bg-yellow-700 text-white font-bold rounded-2xl shadow-2xl transition-all transform hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-4 text-2xl border border-yellow-400/20"
+                        >
+                            <div className="bg-yellow-400/20 p-3 rounded-xl border border-yellow-400/30">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M9 22H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v8" /><path d="M15 2h2" /><path d="M15 11h2" /><path d="M15 8h2" /></svg>
+                            </div>
+                            <span>Registered Students</span>
+                        </button>
+
+                        <button
+                            onClick={() => setView('admins')}
+                            className="w-full py-6 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl shadow-2xl transition-all transform hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-4 text-2xl border border-blue-400/20 md:col-span-2"
+                        >
+                            <div className="bg-blue-400/20 p-3 rounded-xl border border-blue-400/30">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
+                            </div>
+                            <span>Registered Admins</span>
+                        </button>
+                    </div>
+
+                    <div className="glass-panel p-6 h-fit bg-gradient-to-br from-indigo-900/40 to-purple-900/40">
+                        <h2 className="text-xl font-semibold mb-6 text-white border-b border-white/10 pb-2">Platform Stats (Live)</h2>
+                        <div className="space-y-6">
+                            <div className="flex justify-between items-center pb-2">
+                                <span className="text-gray-300">Total Students Registered</span>
+                                <span className="font-bold text-3xl text-fuchsia-400">{stats.totalStudents}</span>
+                            </div>
+                            <div className="flex justify-between items-center pb-2">
+                                <span className="text-gray-300">Active Coupons (Today)</span>
+                                <span className="font-bold text-3xl text-orange-400">{stats.activeCoupons}</span>
+                            </div>
+                            <div className="flex justify-between items-center pb-2">
+                                <span className="text-gray-300">Coupons Redeemed Today</span>
+                                <span className="font-bold text-3xl text-indigo-400">{stats.redeemedToday}</span>
+                            </div>
+                            <div className="border-t border-white/10 pt-4 mt-2">
+                                <div className="flex justify-between items-center pb-2">
+                                    <span className="text-gray-300">Paid Meals Count</span>
+                                    <span className="font-bold text-3xl text-cyan-300">{stats.paidCount || 0}</span>
+                                </div>
+                                <div className="flex justify-between items-center pb-2">
+                                    <span className="text-gray-300">Total Revenue (Today)</span>
+                                    <span className="font-bold text-3xl text-rose-300">₹{stats.revenue || 0}</span>
+                                </div>
+                                <div className="flex justify-between items-center pb-2">
+                                    <span className="text-gray-300">Total Revenue (Month)</span>
+                                    <span className="font-bold text-3xl text-emerald-300">₹{stats.monthlyRevenue || 0}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            ) : view === 'register' ? (
+                <div className="max-w-2xl mx-auto animate-fade-in">
+                    <button
+                        onClick={() => {
+                            setView('home');
+                            setMessage('');
+                        }}
+                        className="mb-6 flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
+                        Back to Overview
+                    </button>
+
                     <div className="glass-panel p-6">
                         <h2 className="text-xl font-semibold mb-4 text-white">Create Department Admin / Canteen Staff</h2>
                         {message && <p className={`mb-4 font-medium ${message.includes('ERROR') ? 'text-red-400' : 'text-green-400'}`}>{message}</p>}
 
-                        <form onSubmit={handleSubmit} className="space-y-4">
+                        <form onSubmit={async (e) => {
+                            e.preventDefault();
+                            setMessage('Creating admin...');
+                            try {
+                                const res = await fetch('/api/users', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify(formData),
+                                });
+                                const data = await res.json();
+                                if (res.ok) {
+                                    setMessage(`SUCCESS: Admin created! Credentials sent.`);
+                                    setFormData({ ...formData, name: '', email: '', phone: '' });
+                                    fetchStats();
+                                } else {
+                                    setMessage(`ERROR: ${data.message}`);
+                                }
+                            } catch (err: any) {
+                                setMessage(`ERROR: ${err.message}`);
+                            }
+                        }} className="space-y-4">
                             <div>
                                 <label className="block text-sm font-medium mb-1 text-gray-300">Role</label>
                                 <select
@@ -98,22 +377,11 @@ export default function SuperAdminDashboard({ user }: { user: any }) {
                                         value={formData.department}
                                         onChange={(e) => setFormData({ ...formData, department: e.target.value })}
                                     >
-                                        {departments.map(dept => {
-                                            const displayNames: any = {
-                                                'cs': 'Computer Science',
-                                                'chemistry': 'Chemistry',
-                                                'commerce': 'Commerce',
-                                                'history': 'History',
-                                                'economics': 'Economics',
-                                                'jmc': 'JMC',
-                                                'canteen': 'Canteen Staff'
-                                            };
-                                            return (
-                                                <option key={dept} value={dept} className="text-black">
-                                                    {displayNames[dept] || dept.toUpperCase()}
-                                                </option>
-                                            );
-                                        })}
+                                        {departments.map(dept => (
+                                            <option key={dept} value={dept} className="text-black">
+                                                {getDeptDisplayName(dept)}
+                                            </option>
+                                        ))}
                                     </select>
                                 </div>
                             )}
@@ -156,40 +424,157 @@ export default function SuperAdminDashboard({ user }: { user: any }) {
                             </button>
                         </form>
                     </div>
-                )}
+                </div>
+            ) : view === 'admins' ? (
+                <div className="animate-fade-in space-y-6">
+                    <button
+                        onClick={() => setView('home')}
+                        className="mb-6 flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
+                        Back to Overview
+                    </button>
 
-                <div className="glass-panel p-6 h-fit bg-gradient-to-br from-indigo-900/40 to-purple-900/40">
-                    <h2 className="text-xl font-semibold mb-6 text-white border-b border-white/10 pb-2">Platform Stats (Live)</h2>
-                    <div className="space-y-6">
-                        <div className="flex justify-between items-center pb-2">
-                            <span className="text-gray-300">Total Students Registered</span>
-                            <span className="font-bold text-3xl text-fuchsia-400">{stats.totalStudents}</span>
+                    <div className="glass-panel p-6">
+                        <div className="flex items-center justify-between mb-6 border-b border-white/10 pb-4">
+                            <h2 className="text-xl font-semibold text-white">Registered Admins & Staff</h2>
+                            <p className="text-sm font-bold text-indigo-400 bg-indigo-400/10 px-3 py-1 rounded-full border border-indigo-400/20">
+                                Total: {adminUsers.length}
+                            </p>
                         </div>
-                        <div className="flex justify-between items-center pb-2">
-                            <span className="text-gray-300">Active Coupons (Today)</span>
-                            <span className="font-bold text-3xl text-orange-400">{stats.activeCoupons}</span>
-                        </div>
-                        <div className="flex justify-between items-center pb-2">
-                            <span className="text-gray-300">Coupons Redeemed Today</span>
-                            <span className="font-bold text-3xl text-indigo-400">{stats.redeemedToday}</span>
-                        </div>
-                        <div className="border-t border-white/10 pt-4 mt-2">
-                            <div className="flex justify-between items-center pb-2">
-                                <span className="text-gray-300">Paid Meals Count</span>
-                                <span className="font-bold text-3xl text-cyan-300">{stats.paidCount || 0}</span>
-                            </div>
-                            <div className="flex justify-between items-center pb-2">
-                                <span className="text-gray-300">Total Revenue (Today)</span>
-                                <span className="font-bold text-3xl text-rose-300">₹{stats.revenue || 0}</span>
-                            </div>
-                            <div className="flex justify-between items-center pb-2">
-                                <span className="text-gray-300">Total Revenue (Month)</span>
-                                <span className="font-bold text-3xl text-emerald-300">₹{stats.monthlyRevenue || 0}</span>
-                            </div>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 max-h-[70vh] overflow-y-auto pr-4 custom-scrollbar">
+                            {adminUsers.length > 0 ? (
+                                adminUsers.map(admin => (
+                                    <div key={admin._id} className="flex justify-between items-center p-4 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-all group">
+                                        <div className="space-y-1">
+                                            <div className="flex items-center gap-2">
+                                                <p className="font-bold text-gray-200">{admin.name}</p>
+                                                <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase transition-all ${admin.role === 'dept_admin' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-orange-500/20 text-orange-300 border border-orange-500/30'}`}>
+                                                    {admin.role === 'dept_admin' ? 'Dept Admin' : 'Canteen'}
+                                                </span>
+                                            </div>
+                                            <p className="text-xs text-indigo-400 flex items-center gap-1">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>
+                                                {getDeptDisplayName(admin.department)}
+                                            </p>
+                                            <div className="flex flex-col gap-0.5">
+                                                <p className="text-[10px] text-gray-500 flex items-center gap-1">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="16" x="2" y="4" rx="2" /><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" /></svg>
+                                                    {admin.email}
+                                                </p>
+                                                <p className="text-[10px] text-gray-500 flex items-center gap-1">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
+                                                    {admin.phone}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <button
+                                            onClick={() => handleDelete(admin._id)}
+                                            className="opacity-0 group-hover:opacity-100 bg-red-500/20 text-red-300 px-4 py-2 rounded-lg text-xs border border-red-500/30 hover:bg-red-500/40 transition-all"
+                                        >
+                                            Remove
+                                        </button>
+                                    </div>
+                                ))
+                            ) : (
+                                <div className="col-span-full py-20 text-center space-y-3">
+                                    <div className="text-4xl text-gray-600">👤</div>
+                                    <p className="text-gray-500">No admins or staff registered yet.</p>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
-            </div>
+            ) : (
+                <div className="animate-fade-in space-y-6">
+                    <button
+                        onClick={() => setView('home')}
+                        className="mb-6 flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
+                        Back to Overview
+                    </button>
+
+                    <div className="glass-panel p-6">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4 border-b border-white/10 pb-4">
+                            <h2 className="text-xl font-semibold text-white">Registered Students</h2>
+                            <div className="flex flex-wrap gap-2">
+                                <button
+                                    onClick={() => setFilterDept('all')}
+                                    className={`px-3 py-1 rounded-full text-xs font-bold transition-all border ${filterDept === 'all' ? 'bg-indigo-600 border-indigo-400 text-white' : 'bg-gray-800 border-gray-700 text-gray-400 hover:text-white'}`}
+                                >
+                                    All Students ({students.filter(s => s.role?.toLowerCase().trim() === 'student').length})
+                                </button>
+                                {departments.filter(d => d !== 'canteen' && d !== 'admin').map(dept => {
+                                    const count = students.filter(s =>
+                                        s.role?.toLowerCase().trim() === 'student' &&
+                                        isDeptMatch(s.department, dept)
+                                    ).length;
+                                    return (
+                                        <button
+                                            key={dept}
+                                            onClick={() => setFilterDept(dept)}
+                                            className={`px-3 py-1 rounded-full text-xs font-bold transition-all border ${filterDept === dept ? 'bg-indigo-600 border-indigo-400 text-white' : 'bg-gray-800 border-gray-700 text-gray-400 hover:text-white'}`}
+                                        >
+                                            {dept.toUpperCase()} ({count})
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        <div className="space-y-6 max-h-[70vh] overflow-y-auto pr-4 custom-scrollbar">
+                            {filterDept === 'all' ? (
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                                    {getFilteredStudents().map(student => (
+                                        <div key={student._id} className="flex justify-between items-center p-3 bg-white/5 rounded-lg border border-white/10 hover:bg-white/10 transition-all">
+                                            <div>
+                                                <p className="font-bold text-gray-200">{student.name}</p>
+                                                <p className="text-xs text-indigo-400">{getDeptDisplayName(student.department)}</p>
+                                                <p className="text-[10px] text-gray-500">{student.email}</p>
+                                            </div>
+                                            <button
+                                                onClick={() => handleDelete(student._id)}
+                                                className="bg-red-500/20 text-red-300 px-3 py-1 rounded text-xs border border-red-500/30 hover:bg-red-500/40 transition-colors"
+                                            >
+                                                Delete
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="space-y-3">
+                                    <h3 className="text-lg font-bold text-indigo-300 flex items-center gap-2">
+                                        <span className="w-2 h-2 rounded-full bg-indigo-500"></span>
+                                        {getDeptDisplayName(filterDept)} ({getFilteredStudents().length})
+                                    </h3>
+                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                                        {getFilteredStudents().length > 0 ? (
+                                            getFilteredStudents().map(student => (
+                                                <div key={student._id} className="flex justify-between items-center p-3 bg-white/5 rounded-lg border border-white/10 hover:bg-white/10 transition-all">
+                                                    <div>
+                                                        <p className="font-bold text-gray-200">{student.name}</p>
+                                                        <p className="text-xs text-gray-400">{student.email}</p>
+                                                    </div>
+                                                    <button
+                                                        onClick={() => handleDelete(student._id)}
+                                                        className="bg-red-500/20 text-red-300 px-3 py-1 rounded text-xs border border-red-500/30 hover:bg-red-500/40 transition-colors"
+                                                    >
+                                                        Delete
+                                                    </button>
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <p className="text-gray-500 text-sm">No students registered in this department.</p>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

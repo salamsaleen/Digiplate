@@ -4,9 +4,16 @@ export function getISTDate(): Date {
     return new Date(istString);
 }
 
-export function isBookingOpen(): { open: boolean; message?: string } {
+export function isBookingOpen(email?: string): { open: boolean; message?: string } {
     const istDate = getISTDate();
     const hours = istDate.getHours();
+
+    // Bypass for test users
+    const testers = ['teststudent@digiplate.com'];
+    if (email && testers.includes(email.toLowerCase())) {
+        console.log(`[TIME_LOG] Bypass granted for tester: ${email}`);
+        return { open: true };
+    }
 
     console.log(`[TIME_LOG] Checking Booking Time. IST Hours: ${hours}`);
 

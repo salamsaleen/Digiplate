@@ -77,21 +77,24 @@
 }
 
 .logoWrapper:hover {
-    transform: scale(1.05) rotate(5deg);
+    transform: scale(1.1) translateY(-5px);
+    filter: drop-shadow(0 0 20px rgba(96, 165, 250, 0.4));
 }
 
 .logoBg {
-    width: 5rem;
-    height: 5rem;
-    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-    border-radius: 1.25rem;
+    width: 6.5rem;
+    height: 6.5rem;
+    background: rgba(15, 23, 42, 0.4);
+    border-radius: 1.5rem;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.4), inset 0 2px 4px rgba(255, 255, 255, 0.2);
+    box-shadow: 0 15px 35px -10px rgba(0, 0, 0, 0.5), 
+                inset 0 2px 4px rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.1);
     position: relative;
     overflow: hidden;
+    backdrop-filter: blur(8px);
 }
 
 .logoBg::after {
@@ -101,8 +104,8 @@
     left: -50%;
     width: 200%;
     height: 200%;
-    background: linear-gradient(45deg, transparent 45%, rgba(255, 255, 255, 0.1) 50%, transparent 55%);
-    animation: shine 3s infinite;
+    background: linear-gradient(45deg, transparent 45%, rgba(255, 255, 255, 0.05) 50%, transparent 55%);
+    animation: shine 4s infinite linear;
 }
 
 @keyframes shine {

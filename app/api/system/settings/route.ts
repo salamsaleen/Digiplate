@@ -4,10 +4,16 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import connectToDatabase from '@/lib/db';
 import SystemSettings from '@/models/SystemSettings';
+import { triggerAutomatedReminders } from '@/lib/automation';
 
 export async function GET(req: NextRequest) {
     try {
         await connectToDatabase();
+
+        // Passive trigger for automated notifications
+        // This runs in the background and won't block the response
+        triggerAutomatedReminders().catch(err => console.error('[AUTO-TRIGGER-ERROR]', err));
+
 
         // Get settings for "Tomorrow" by default, or specific date if query param provided
         // Logic: Polling is usually for the NEXT day.

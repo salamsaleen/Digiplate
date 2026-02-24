@@ -43,19 +43,16 @@ export default function Home() {
 
       <main className={styles.mainContent}>
 
-        {/* Logo Section */}
         <div className={styles.logoSection}>
-          <div className={styles.logoWrapper}>
-            <div className={styles.logoBg}>
-              {mounted && (
-                <img
-                  src="/icons/icon.svg?v=5"
-                  alt="DigiPlate Logo"
-                  style={{ width: '85%', height: '85%', objectFit: 'contain' }}
-                />
-              )}
+          {mounted && (
+            <div className="mb-4">
+              <img
+                src="/logo_plate_v2.jpg"
+                alt="DigiPlate Logo"
+                className="w-20 h-20 rounded-xl shadow-xl transition-transform hover:scale-105 duration-300 mx-auto"
+              />
             </div>
-          </div>
+          )}
 
           <h1 className={styles.title}>
             DigiPlate

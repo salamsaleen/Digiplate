@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectToDatabase from '@/lib/db';
 import User from '@/models/User';
 import { hashPassword, generateRandomPassword } from '@/lib/password';
-import { sendSMS, sendEmail } from '@/lib/notify';
+import { sendWhatsApp, sendEmail } from '@/lib/notify';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 
@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
         });
 
         const credentialMsg = `Welcome to DigiPlate! Your login: Email: ${email}, Password: ${rawPassword}`;
-        await sendSMS(phone, credentialMsg);
+        await sendWhatsApp(phone, credentialMsg);
         await sendEmail(email, 'Your DigiPlate Account Credentials', credentialMsg);
 
         return NextResponse.json({ message: 'User created successfully', user: newUser }, { status: 201 });
@@ -64,9 +64,14 @@ export async function GET(req: NextRequest) {
             query = { department: (session.user as any).department, role: 'student' };
         } else if ((session.user as any).role === 'student') {
             return NextResponse.json({ message: 'Access Denied' }, { status: 403 });
+        } else if ((session.user as any).role !== 'super_admin') {
+            // Only Super Admin and Dept Admin allowed for listings (Canteen staff might need it later? but for now keep it restricted)
+            return NextResponse.json({ message: 'Access Denied' }, { status: 403 });
         }
 
+        console.log('Fetching users with query:', query);
         const users = await User.find(query).select('-password');
+        console.log(`Found ${users.length} users`);
         return NextResponse.json(users);
     } catch (error: any) {
         return NextResponse.json({ message: error.message || 'Internal Server Error' }, { status: 500 });

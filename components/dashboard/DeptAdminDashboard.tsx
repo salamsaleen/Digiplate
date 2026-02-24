@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
 export default function DeptAdminDashboard({ user }: { user: any }) {
-    const [showForm, setShowForm] = useState(false);
+    const [view, setView] = useState<'home' | 'register' | 'students'>('home');
     const [formData, setFormData] = useState({ name: '', email: '', phone: '', role: 'student', program: 'ug' });
     const [message, setMessage] = useState('');
     const [students, setStudents] = useState<any[]>([]);
@@ -94,8 +94,11 @@ export default function DeptAdminDashboard({ user }: { user: any }) {
         return map[dept] || dept.toUpperCase();
     };
 
-    const ugStudents = students.filter(s => s.program === 'ug' || !s.program);
-    const pgStudents = students.filter(s => s.program === 'pg');
+    const filteredPolls = polls.filter(p => p.department === user.department);
+    const filteredApproved = approved.filter(c => c.department === user.department);
+    const deptStudents = students.filter(s => s.department === user.department);
+    const ugStudents = deptStudents.filter(s => s.program === 'ug' || !s.program);
+    const pgStudents = deptStudents.filter(s => s.program === 'pg');
 
     return (
         <div className="p-6 min-h-screen relative">
@@ -109,112 +112,190 @@ export default function DeptAdminDashboard({ user }: { user: any }) {
             </h1>
             <p className="text-gray-400 mb-6">Manage student registrations and coupon approvals</p>
 
-            <button
-                onClick={() => setShowForm(!showForm)}
-                className="w-full mb-8 p-4 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2"
-            >
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
-                {showForm ? 'Hide Registration Form' : 'Register Student'}
-            </button>
+            {view === 'home' ? (
+                <div className="space-y-8 animate-fade-in">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <button
+                            onClick={() => setView('register')}
+                            className="w-full py-6 bg-[#064e3b] hover:bg-[#065f46] text-white font-bold rounded-2xl shadow-2xl transition-all transform hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-4 text-2xl border border-green-400/20"
+                        >
+                            <div className="bg-green-400/20 p-3 rounded-xl border border-green-400/30">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
+                            </div>
+                            <span>Register Student</span>
+                        </button>
 
-            {showForm && (
-                <div className="glass-panel p-6 mb-8 border-l-4 border-green-500">
-                    <h2 className="text-xl font-semibold mb-4 text-white">Register New Student</h2>
-                    {message && <p className={`mb-4 font-medium ${message.includes('ERROR') ? 'text-red-400' : 'text-green-400'}`}>{message}</p>}
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                        {isDividedDept && (
-                            <div>
-                                <label className="block text-sm font-medium mb-1 text-gray-300">Program</label>
-                                <select
-                                    className="glass-input"
-                                    value={formData.program}
-                                    onChange={(e) => setFormData({ ...formData, program: e.target.value })}
-                                >
-                                    <option value="ug" className="text-black">{user.department === 'commerce' ? 'B.Com' : 'BA (UG)'}</option>
-                                    <option value="pg" className="text-black">{user.department === 'commerce' ? 'M.Com' : 'MA (PG)'}</option>
-                                </select>
+                        <button
+                            onClick={() => setView('students')}
+                            className="w-full py-6 bg-yellow-600 hover:bg-yellow-700 text-white font-bold rounded-2xl shadow-2xl transition-all transform hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-4 text-2xl border border-yellow-400/20"
+                        >
+                            <div className="bg-yellow-400/20 p-3 rounded-xl border border-yellow-400/30">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M9 22H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v8" /><path d="M15 2h2" /><path d="M15 11h2" /><path d="M15 8h2" /></svg>
+                            </div>
+                            <span>View Students</span>
+                        </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                        <div className="glass-panel p-6 border-l-4 border-purple-500">
+                            <h2 className="text-xl font-semibold mb-4 text-purple-400">All Polled Students ({filteredPolls.length})</h2>
+                            <div className="max-h-60 overflow-y-auto space-y-2 pr-2">
+                                {filteredPolls.map((p: any) => (
+                                    <div key={p._id} className="p-3 bg-purple-900/30 rounded flex justify-between items-center border border-purple-500/30">
+                                        <div>
+                                            <p className="font-bold text-gray-200 text-sm">{p.studentId?.name || 'Unknown'} <span className="text-xs text-gray-500">({p.studentId?.program?.toUpperCase()})</span></p>
+                                            <p className="text-xs text-purple-300">{p.studentId?.email}</p>
+                                        </div>
+                                        <span className={`text-[10px] px-2 py-0.5 rounded uppercase font-bold tracking-wider ${p.status === 'polled' ? 'bg-yellow-500/20 text-yellow-500' : 'bg-green-500/20 text-green-500'}`}>
+                                            {p.status === 'polled' ? 'Poll Only' : 'Paid'}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="glass-panel p-6 border-l-4 border-green-500">
+                            <h2 className="text-xl font-semibold mb-4 text-green-400">Poll & Pay (Confirmed) ({filteredApproved.length})</h2>
+                            <div className="max-h-60 overflow-y-auto space-y-2 pr-2">
+                                {filteredApproved.map((c: any) => (
+                                    <div key={c._id} className="p-3 bg-green-900/30 rounded flex justify-between items-center border border-green-500/30">
+                                        <div>
+                                            <p className="font-bold text-gray-200 text-sm">{c.studentId?.name || 'Unknown'}</p>
+                                            <p className="text-xs text-green-300">{c.studentId?.email}</p>
+                                        </div>
+                                        <span className="text-xs text-gray-400 font-mono bg-black/40 px-2 py-1 rounded border border-gray-600">Token: {c.code}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="glass-panel p-6">
+                        <h2 className="text-xl font-semibold mb-4 text-white">Registered Students ({deptStudents.length})</h2>
+                        {isDividedDept ? (
+                            <div className="flex flex-col gap-6">
+                                <div>
+                                    <h3 className="text-lg font-medium text-blue-300 mb-2 border-b border-blue-500/30 pb-1">UG Students</h3>
+                                    <div className="overflow-y-auto max-h-[300px] space-y-3 pr-2">
+                                        {ugStudents.map((student: any) => (
+                                            <div key={student._id} className="flex justify-between items-center p-3 bg-white/5 rounded border border-white/10">
+                                                <div><p className="font-bold text-gray-200">{student.name}</p><p className="text-sm text-gray-400">{student.email}</p></div>
+                                                <button onClick={() => handleDelete(student._id)} className="bg-red-500/20 text-red-300 px-3 py-1 rounded text-sm border border-red-500/30">Delete</button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-medium text-pink-300 mb-2 border-b border-pink-500/30 pb-1">PG Students</h3>
+                                    <div className="overflow-y-auto max-h-[300px] space-y-3 pr-2">
+                                        {pgStudents.map((student: any) => (
+                                            <div key={student._id} className="flex justify-between items-center p-3 bg-white/5 rounded border border-white/10">
+                                                <div><p className="font-bold text-gray-200">{student.name}</p><p className="text-sm text-gray-400">{student.email}</p></div>
+                                                <button onClick={() => handleDelete(student._id)} className="bg-red-500/20 text-red-300 px-3 py-1 rounded text-sm border border-red-500/30">Delete</button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="overflow-y-auto max-h-[600px] space-y-3 pr-2">
+                                {deptStudents.map((student: any) => (
+                                    <div key={student._id} className="flex justify-between items-center p-3 bg-white/5 rounded border border-white/10">
+                                        <div><p className="font-bold text-gray-200">{student.name}</p><p className="text-sm text-gray-400">{student.email}</p></div>
+                                        <button onClick={() => handleDelete(student._id)} className="bg-red-500/20 text-red-300 px-3 py-1 rounded text-sm border border-red-500/30">Delete</button>
+                                    </div>
+                                ))}
                             </div>
                         )}
-                        <input type="text" placeholder="Full Name" className="glass-input" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required />
-                        <input type="email" placeholder="Email" className="glass-input" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} required />
-                        <input type="tel" placeholder="Phone" className="glass-input" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} required />
-                        <button className="glass-button w-full bg-green-600 hover:bg-green-500 font-bold">Register Student & Send SMS</button>
-                    </form>
+                    </div>
+                </div>
+            ) : view === 'register' ? (
+                <div className="max-w-2xl mx-auto animate-fade-in">
+                    <button
+                        onClick={() => {
+                            setView('home');
+                            setMessage('');
+                        }}
+                        className="mb-6 flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
+                        Back to Overview
+                    </button>
+
+                    <div className="glass-panel p-6 border-l-4 border-green-500">
+                        <h2 className="text-xl font-semibold mb-4 text-white">Register New Student</h2>
+                        {message && <p className={`mb-4 font-medium ${message.includes('ERROR') ? 'text-red-400' : 'text-green-400'}`}>{message}</p>}
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                            {isDividedDept && (
+                                <div>
+                                    <label className="block text-sm font-medium mb-1 text-gray-300">Program</label>
+                                    <select
+                                        className="glass-input"
+                                        value={formData.program}
+                                        onChange={(e) => setFormData({ ...formData, program: e.target.value })}
+                                    >
+                                        <option value="ug" className="text-black">{user.department === 'commerce' ? 'B.Com' : 'BA (UG)'}</option>
+                                        <option value="pg" className="text-black">{user.department === 'commerce' ? 'M.Com' : 'MA (PG)'}</option>
+                                    </select>
+                                </div>
+                            )}
+                            <input type="text" placeholder="Full Name" className="glass-input" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required />
+                            <input type="email" placeholder="Email" className="glass-input" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} required />
+                            <input type="tel" placeholder="Phone" className="glass-input" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} required />
+                            <button className="glass-button w-full bg-green-600 hover:bg-green-500 font-bold">Register Student & Send WhatsApp</button>
+                        </form>
+                    </div>
+                </div>
+            ) : (
+                <div className="animate-fade-in">
+                    <button
+                        onClick={() => setView('home')}
+                        className="mb-6 flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
+                        Back to Overview
+                    </button>
+
+                    <div className="glass-panel p-6">
+                        <h2 className="text-xl font-semibold mb-4 text-white">Registered Students ({deptStudents.length})</h2>
+                        {isDividedDept ? (
+                            <div className="flex flex-col gap-6">
+                                <div>
+                                    <h3 className="text-lg font-medium text-blue-300 mb-2 border-b border-blue-500/30 pb-1">UG Students</h3>
+                                    <div className="overflow-y-auto max-h-[600px] space-y-3 pr-2">
+                                        {ugStudents.map((student: any) => (
+                                            <div key={student._id} className="flex justify-between items-center p-3 bg-white/5 rounded border border-white/10">
+                                                <div><p className="font-bold text-gray-200">{student.name}</p><p className="text-sm text-gray-400">{student.email}</p></div>
+                                                <button onClick={() => handleDelete(student._id)} className="bg-red-500/20 text-red-300 px-3 py-1 rounded text-sm border border-red-500/30">Delete</button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-medium text-pink-300 mb-2 border-b border-pink-500/30 pb-1">PG Students</h3>
+                                    <div className="overflow-y-auto max-h-[600px] space-y-3 pr-2">
+                                        {pgStudents.map((student: any) => (
+                                            <div key={student._id} className="flex justify-between items-center p-3 bg-white/5 rounded border border-white/10">
+                                                <div><p className="font-bold text-gray-200">{student.name}</p><p className="text-sm text-gray-400">{student.email}</p></div>
+                                                <button onClick={() => handleDelete(student._id)} className="bg-red-500/20 text-red-300 px-3 py-1 rounded text-sm border border-red-500/30">Delete</button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="overflow-y-auto max-h-[600px] space-y-3 pr-2">
+                                {deptStudents.map((student: any) => (
+                                    <div key={student._id} className="flex justify-between items-center p-3 bg-white/5 rounded border border-white/10">
+                                        <div><p className="font-bold text-gray-200">{student.name}</p><p className="text-sm text-gray-400">{student.email}</p></div>
+                                        <button onClick={() => handleDelete(student._id)} className="bg-red-500/20 text-red-300 px-3 py-1 rounded text-sm border border-red-500/30">Delete</button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
                 </div>
             )}
-
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8">
-                <div className="glass-panel p-6 border-l-4 border-purple-500">
-                    <h2 className="text-xl font-semibold mb-4 text-purple-400">All Polled Students ({polls.length})</h2>
-                    <div className="max-h-60 overflow-y-auto space-y-2 pr-2">
-                        {polls.map((p: any) => (
-                            <div key={p._id} className="p-3 bg-purple-900/30 rounded flex justify-between items-center border border-purple-500/30">
-                                <div>
-                                    <p className="font-bold text-gray-200 text-sm">{p.studentId?.name || 'Unknown'} <span className="text-xs text-gray-500">({p.studentId?.program?.toUpperCase()})</span></p>
-                                    <p className="text-xs text-purple-300">{p.studentId?.email}</p>
-                                </div>
-                                <span className={`text-[10px] px-2 py-0.5 rounded uppercase font-bold tracking-wider ${p.status === 'polled' ? 'bg-yellow-500/20 text-yellow-500' : 'bg-green-500/20 text-green-500'}`}>
-                                    {p.status === 'polled' ? 'Poll Only' : 'Paid'}
-                                </span>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-
-                <div className="glass-panel p-6 border-l-4 border-green-500">
-                    <h2 className="text-xl font-semibold mb-4 text-green-400">Poll & Pay (Confirmed) ({approved.length})</h2>
-                    <div className="max-h-60 overflow-y-auto space-y-2 pr-2">
-                        {approved.map((c: any) => (
-                            <div key={c._id} className="p-3 bg-green-900/30 rounded flex justify-between items-center border border-green-500/30">
-                                <div>
-                                    <p className="font-bold text-gray-200 text-sm">{c.studentId?.name || 'Unknown'}</p>
-                                    <p className="text-xs text-green-300">{c.studentId?.email}</p>
-                                </div>
-                                <span className="text-xs text-gray-400 font-mono bg-black/40 px-2 py-1 rounded border border-gray-600">Token: {c.code}</span>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </div>
-
-            <div className="glass-panel p-6">
-                <h2 className="text-xl font-semibold mb-4 text-white">Registered Students ({students.length})</h2>
-                {isDividedDept ? (
-                    <div className="flex flex-col gap-6">
-                        <div>
-                            <h3 className="text-lg font-medium text-blue-300 mb-2 border-b border-blue-500/30 pb-1">UG Students</h3>
-                            <div className="overflow-y-auto max-h-[300px] space-y-3 pr-2">
-                                {ugStudents.map((student: any) => (
-                                    <div key={student._id} className="flex justify-between items-center p-3 bg-white/5 rounded border border-white/10">
-                                        <div><p className="font-bold text-gray-200">{student.name}</p><p className="text-sm text-gray-400">{student.email}</p></div>
-                                        <button onClick={() => handleDelete(student._id)} className="bg-red-500/20 text-red-300 px-3 py-1 rounded text-sm border border-red-500/30">Delete</button>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                        <div>
-                            <h3 className="text-lg font-medium text-pink-300 mb-2 border-b border-pink-500/30 pb-1">PG Students</h3>
-                            <div className="overflow-y-auto max-h-[300px] space-y-3 pr-2">
-                                {pgStudents.map((student: any) => (
-                                    <div key={student._id} className="flex justify-between items-center p-3 bg-white/5 rounded border border-white/10">
-                                        <div><p className="font-bold text-gray-200">{student.name}</p><p className="text-sm text-gray-400">{student.email}</p></div>
-                                        <button onClick={() => handleDelete(student._id)} className="bg-red-500/20 text-red-300 px-3 py-1 rounded text-sm border border-red-500/30">Delete</button>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                ) : (
-                    <div className="overflow-y-auto max-h-[600px] space-y-3 pr-2">
-                        {students.map((student: any) => (
-                            <div key={student._id} className="flex justify-between items-center p-3 bg-white/5 rounded border border-white/10">
-                                <div><p className="font-bold text-gray-200">{student.name}</p><p className="text-sm text-gray-400">{student.email}</p></div>
-                                <button onClick={() => handleDelete(student._id)} className="bg-red-500/20 text-red-300 px-3 py-1 rounded text-sm border border-red-500/30">Delete</button>
-                            </div>
-                        ))}
-                    </div>
-                )}
-            </div>
         </div>
     );
 }

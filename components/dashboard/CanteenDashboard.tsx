@@ -2,6 +2,8 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Scanner } from '@yudiel/react-qr-scanner';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 export default function CanteenDashboard({ user }: { user: any }) {
     const [couponCode, setCouponCode] = useState('');
@@ -12,6 +14,8 @@ export default function CanteenDashboard({ user }: { user: any }) {
     const [stats, setStats] = useState({ polledCount: 0, redeemedCount: 0, paidCount: 0, revenue: 0 });
     const [showFinance, setShowFinance] = useState(false);
     const [showScanner, setShowScanner] = useState(false);
+    const [view, setView] = useState<'home' | 'validate'>('home');
+    const [scannerError, setScannerError] = useState<string | null>(null);
 
     // Canteen Settings State
     const [settings, setSettings] = useState({
@@ -27,35 +31,6 @@ export default function CanteenDashboard({ user }: { user: any }) {
     const [showStatusModal, setShowStatusModal] = useState(false);
     const [tempReason, setTempReason] = useState('');
 
-    const [showCredentialSender, setShowCredentialSender] = useState(false);
-    const [credData, setCredData] = useState({ name: '', email: '', phone: '', password: '' });
-
-    const handleSendCredentials = async () => {
-        if (!credData.password || (!credData.email && !credData.phone)) {
-            setMessage('Please provide password and either email or phone.');
-            return;
-        }
-        setLoading(true);
-        try {
-            const res = await fetch('/api/admin/users/send-credentials', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(credData),
-            });
-            const data = await res.json();
-            if (res.ok) {
-                setMessage('Credentials Sent Successfully!');
-                setCredData({ name: '', email: '', phone: '', password: '' });
-                setShowCredentialSender(false);
-            } else {
-                setMessage(`Error: ${data.message}`);
-            }
-        } catch (error) {
-            setMessage('Failed to send credentials.');
-        } finally {
-            setLoading(false);
-        }
-    };
 
     // Available Side Dishes Options
     const AVAILABLE_SIDES = ['പപ്പടം', 'അച്ചാർ', 'ഉപ്പേരി'];
@@ -137,6 +112,84 @@ export default function CanteenDashboard({ user }: { user: any }) {
                 setTimeout(() => setMessage(''), 3000);
             }
         } catch (e) { console.error(e); }
+    };
+
+    const generateCanteenReport = async (period: 'daily' | 'weekly' | 'monthly') => {
+        setShowMenu(false);
+        setMessage(`Generating ${period} report...`);
+        try {
+            const res = await fetch(`/api/canteen/reports?period=${period}`);
+            if (!res.ok) {
+                const errorData = await res.json().catch(() => ({ message: 'Server returned an error page' }));
+                throw new Error(errorData.message || 'Report generation failed');
+            }
+            const data = await res.json();
+
+            const doc = new jsPDF();
+            const dateStr = new Date().toLocaleDateString();
+
+            // Header
+            doc.setFontSize(22);
+            doc.setTextColor(40, 40, 40);
+            doc.text('DigiPlate Canteen Report', 14, 22);
+
+            doc.setFontSize(10);
+            doc.setTextColor(100, 100, 100);
+            doc.text(`Period: ${period.toUpperCase()}`, 14, 30);
+            doc.text(`Generated: ${dateStr}`, 14, 35);
+            doc.text(`Range: ${new Date(data.startDate).toLocaleDateString()} to ${new Date(data.endDate).toLocaleDateString()}`, 14, 40);
+
+            // 1. Financial Status
+            doc.setFontSize(16);
+            doc.setTextColor(0, 0, 0);
+            doc.text('1. Financial Status', 14, 55);
+            autoTable(doc, {
+                startY: 60,
+                head: [['Metric', 'Value']],
+                body: [
+                    ['Total Revenue', `Rs. ${data.summary.totalRevenue}`],
+                    ['Pre-paid Meals (Active)', data.summary.prepaidCount],
+                ],
+                theme: 'striped',
+                headStyles: { fillStyle: 'f' as any, fillColor: [46, 125, 50] }
+            });
+
+            // 2. Meal Status
+            doc.setFontSize(16);
+            doc.text('2. Meal Summary', 14, (doc as any).lastAutoTable.finalY + 15);
+            autoTable(doc, {
+                startY: (doc as any).lastAutoTable.finalY + 20,
+                head: [['Status', 'Count']],
+                body: [
+                    ['Meals Served (Redeemed)', data.summary.redeemedCount],
+                    ['Estimated Meals (Polled/Requested)', data.summary.estimatedCount],
+                ],
+                theme: 'grid',
+                headStyles: { fillColor: [25, 118, 210] }
+            });
+
+            // 3. Department Breakdown
+            doc.setFontSize(16);
+            doc.text('3. Department Breakdown', 14, (doc as any).lastAutoTable.finalY + 15);
+            autoTable(doc, {
+                startY: (doc as any).lastAutoTable.finalY + 20,
+                head: [['Department', 'Paid Meals', 'Revenue']],
+                body: data.deptStats.map((d: any) => [
+                    d.dept.toUpperCase(),
+                    d.count,
+                    `Rs. ${d.revenue}`
+                ]),
+                theme: 'striped',
+                headStyles: { fillColor: [156, 39, 176] }
+            });
+
+            doc.save(`Canteen_Report_${period}_${dateStr}.pdf`);
+            setMessage('✅ Report downloaded successfully!');
+            setTimeout(() => setMessage(''), 3000);
+        } catch (error: any) {
+            console.error(error);
+            setMessage(`ERROR: ${error.message}`);
+        }
     };
 
     const handleAction = async (e?: React.FormEvent, codeOverride?: string) => {
@@ -230,109 +283,253 @@ export default function CanteenDashboard({ user }: { user: any }) {
                             </button>
                             <button
                                 onClick={() => { setShowFinance(!showFinance); setShowMenu(false); }}
-                                className="block w-full text-left px-4 py-3 text-sm text-gray-200 hover:bg-white/10 transition-colors"
+                                className="block w-full text-left px-4 py-3 text-sm text-gray-200 hover:bg-white/10 transition-colors border-b border-gray-700/50"
                             >
                                 <span className="mr-2">💰</span>
                                 {showFinance ? 'Hide Financial Stats' : 'Show Financial Stats'}
                             </button>
+                            <div className="bg-white/5 px-4 py-1 border-b border-gray-600/50">
+                                <span className="text-[10px] font-bold text-gray-500 uppercase">Download Reports</span>
+                            </div>
                             <button
-                                onClick={() => { setShowCredentialSender(true); setShowMenu(false); }}
-                                className="block w-full text-left px-4 py-3 text-sm text-gray-200 hover:bg-white/10 transition-colors border-t border-gray-700/50"
+                                onClick={() => generateCanteenReport('daily')}
+                                className="block w-full text-left px-4 py-3 text-sm text-gray-200 hover:bg-white/10 transition-colors border-b border-gray-700/50"
                             >
-                                <span className="mr-2">📧</span>
-                                Send Login Details
+                                <span className="mr-2">📄</span> Daily Report
+                            </button>
+                            <button
+                                onClick={() => generateCanteenReport('weekly')}
+                                className="block w-full text-left px-4 py-3 text-sm text-gray-200 hover:bg-white/10 transition-colors border-b border-gray-700/50"
+                            >
+                                <span className="mr-2">📅</span> Weekly Report
+                            </button>
+                            <button
+                                onClick={() => generateCanteenReport('monthly')}
+                                className="block w-full text-left px-4 py-3 text-sm text-gray-200 hover:bg-white/10 transition-colors"
+                            >
+                                <span className="mr-2">📊</span> Monthly Report
                             </button>
                         </div>
                     )}
                 </div>
             </div>
 
-            {/* Credential Sender Modal */}
-            {showCredentialSender && (
-                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-                    <div className="glass-panel p-6 max-w-sm w-full border border-gray-700 space-y-4">
-                        <h3 className="text-xl font-bold text-white mb-2">Send Login Details</h3>
 
-                        <input
-                            type="text"
-                            placeholder="Student Name"
-                            className="w-full bg-black/30 border border-gray-600 rounded p-3 text-white focus:border-blue-500 outline-none"
-                            value={credData.name}
-                            onChange={(e) => setCredData({ ...credData, name: e.target.value })}
-                        />
-                        <input
-                            type="email"
-                            placeholder="Email Address"
-                            className="w-full bg-black/30 border border-gray-600 rounded p-3 text-white focus:border-blue-500 outline-none"
-                            value={credData.email}
-                            onChange={(e) => setCredData({ ...credData, email: e.target.value })}
-                        />
-                        <input
-                            type="tel"
-                            placeholder="Phone Number (e.g. +91...)"
-                            className="w-full bg-black/30 border border-gray-600 rounded p-3 text-white focus:border-blue-500 outline-none"
-                            value={credData.phone}
-                            onChange={(e) => setCredData({ ...credData, phone: e.target.value })}
-                        />
-                        <input
-                            type="text"
-                            placeholder="Password to Send"
-                            className="w-full bg-black/30 border border-gray-600 rounded p-3 text-white focus:border-blue-500 outline-none"
-                            value={credData.password}
-                            onChange={(e) => setCredData({ ...credData, password: e.target.value })}
-                        />
-
-                        <div className="flex gap-3 pt-4">
-                            <button
-                                onClick={() => setShowCredentialSender(false)}
-                                className="flex-1 px-4 py-2 border border-gray-600 text-gray-300 rounded hover:bg-white/10"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handleSendCredentials}
-                                disabled={loading}
-                                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 font-bold"
-                            >
-                                {loading ? 'Sending...' : 'Send'}
-                            </button>
+            {view === 'home' ? (
+                <div className="max-w-4xl mx-auto space-y-8 animate-fade-in">
+                    {/* Stats Cards */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative">
+                        <div className="glass-panel p-6 text-center border border-orange-500/30 bg-orange-900/20">
+                            <p className="text-orange-300 font-semibold mb-2">Estimated Meals</p>
+                            <p className="text-4xl font-bold text-orange-400">{stats.polledCount}</p>
+                            <p className="text-xs text-orange-300/70 mt-2">Based on student polls</p>
                         </div>
+                        <div className="glass-panel p-6 text-center border border-indigo-500/30 bg-indigo-900/20">
+                            <p className="text-indigo-300 font-semibold mb-2">Meals Served Today</p>
+                            <p className="text-4xl font-bold text-indigo-400">{stats.redeemedCount}</p>
+                            <p className="text-xs text-indigo-300/70 mt-2">Coupons redeemed</p>
+                        </div>
+
+                        {showFinance && (
+                            <>
+                                <div className="glass-panel p-6 text-center border border-cyan-500/30 bg-cyan-900/20">
+                                    <p className="text-cyan-300 font-semibold mb-2">Pre-paid Meals</p>
+                                    <p className="text-4xl font-bold text-cyan-400">{stats.paidCount || 0}</p>
+                                    <p className="text-xs text-cyan-300/70 mt-2">Active + Redeemed</p>
+                                </div>
+                                <div className="glass-panel p-6 text-center border border-rose-500/30 bg-rose-900/20">
+                                    <p className="text-rose-300 font-semibold mb-2">Total Revenue (₹)</p>
+                                    <p className="text-4xl font-bold text-rose-400">₹{stats.revenue || 0}</p>
+                                    <p className="text-xs text-rose-300/70 mt-2">Today's Collection</p>
+                                </div>
+                            </>
+                        )}
+                    </div>
+
+                    <button
+                        onClick={() => setView('validate')}
+                        className="w-full py-6 bg-[#064e3b] hover:bg-[#065f46] text-white font-bold rounded-2xl shadow-2xl transition-all transform hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-4 text-2xl border border-green-400/20"
+                    >
+                        <div className="bg-green-400/20 p-3 rounded-xl border border-green-400/30">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2" /><path d="M17 3h2a2 2 0 0 1 2 2v2" /><path d="M21 17v2a2 2 0 0 1-2 2h-2" /><path d="M3 17v2a2 2 0 0 1 2 2h2" /><path d="M8 12h8" /><path d="M12 8v8" /></svg>
+                        </div>
+                        <span>Validate Coupon</span>
+                    </button>
+
+                    <p className="text-gray-500 text-center text-sm">Click here to start scanning QR codes or enter codes manually</p>
+                </div>
+            ) : (
+                <div className="max-w-md mx-auto animate-fade-in">
+                    <button
+                        onClick={() => {
+                            setView('home');
+                            setScanResult(null);
+                            setScannedCoupon(null);
+                            setMessage('');
+                            setShowScanner(false);
+                        }}
+                        className="mb-6 flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
+                        Back to Overview
+                    </button>
+
+                    <div className="glass-panel p-8">
+                        <h2 className="text-xl font-semibold mb-2 text-center text-white">Coupon Validation</h2>
+                        <p className="text-gray-400 text-center mb-6 text-sm">Scan or enter code to redeem</p>
+
+                        <button
+                            onClick={() => {
+                                setScannerError(null);
+                                setShowScanner(!showScanner);
+                            }}
+                            className="w-full mb-6 p-4 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2" /><path d="M17 3h2a2 2 0 0 1 2 2v2" /><path d="M21 17v2a2 2 0 0 1-2 2h-2" /><path d="M3 17v2a2 2 0 0 1 2 2h2" /><path d="M8 12h8" /><path d="M12 8v8" /></svg>
+                            {showScanner ? 'Close Scanner' : 'Scan Coupon'}
+                        </button>
+
+                        {message && !showMealModal && !showStatusModal && (
+                            <div className={`p-4 mb-6 rounded text-center font-bold ${scanResult === 'SUCCESS' ? 'bg-green-500/20 text-green-300 border border-green-500/30' :
+                                message.includes('Updated') ? 'bg-blue-500/20 text-blue-300' :
+                                    'bg-red-500/20 text-red-300 border border-red-500/30'
+                                }`}>
+                                {message}
+                            </div>
+                        )}
+
+                        {scannerError && (
+                            <div className="p-4 mb-6 bg-red-500/20 text-red-300 border border-red-500/30 rounded-xl text-center animate-fade-in text-sm">
+                                <p className="font-bold mb-1">Camera Error</p>
+                                <p className="mb-3 opacity-80">{scannerError}</p>
+                                <button
+                                    onClick={() => {
+                                        setScannerError(null);
+                                        setShowScanner(true);
+                                    }}
+                                    className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold transition-colors shadow-lg"
+                                >
+                                    Retry Camera
+                                </button>
+                            </div>
+                        )}
+
+                        {/* Scanner Section */}
+                        {showScanner && !scannerError && (
+                            <div className="mb-6 rounded-lg overflow-hidden border border-white/20 relative bg-black min-h-[300px] flex items-center justify-center">
+                                <Scanner
+                                    onScan={handleScan}
+                                    onError={(error) => {
+                                        console.error("Scanner Error:", error);
+                                        setScannerError(error?.message || 'Timeout starting video source');
+                                        setShowScanner(false);
+                                    }}
+                                    constraints={{
+                                        facingMode: 'environment'
+                                    }}
+                                    components={{
+                                        onOff: false,
+                                        torch: false,
+                                        zoom: false,
+                                        finder: true,
+                                    }}
+                                    styles={{
+                                        container: { width: '100%', height: '300px' },
+                                        video: { width: '100%', height: '300px', objectFit: 'cover' }
+                                    }}
+                                />
+                                <button
+                                    onClick={() => {
+                                        setShowScanner(false);
+                                        setScannerError(null);
+                                    }}
+                                    className="absolute top-2 right-2 bg-black/50 text-white p-2 rounded-full z-10 hover:bg-black/70"
+                                >
+                                    ✕
+                                </button>
+                            </div>
+                        )}
+
+                        <div className="relative flex py-2 items-center">
+                            <div className="flex-grow border-t border-gray-600"></div>
+                            <span className="flex-shrink-0 mx-4 text-gray-400 text-sm">Or enter manually</span>
+                            <div className="flex-grow border-t border-gray-600"></div>
+                        </div>
+
+                        <form onSubmit={(e) => handleAction(e)} className="space-y-4 mt-4">
+                            <input
+                                type="text"
+                                placeholder="Enter Coupon Code"
+                                className="glass-input text-center text-lg tracking-widest uppercase"
+                                value={couponCode}
+                                onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                            />
+
+                            <div className="pt-2">
+                                <button
+                                    type="submit"
+                                    disabled={loading || !couponCode}
+                                    className={`glass-button bg-green-600 w-full hover:bg-green-700 border border-green-500 ${loading ? 'opacity-50' : ''}`}
+                                >
+                                    {loading ? 'Processing...' : 'Validate Now'}
+                                </button>
+                            </div>
+                        </form>
+
+                        {/* Display Scanned/Validated Coupon Details */}
+                        {scannedCoupon && (
+                            <div className={`mt-6 rounded-xl overflow-hidden border animate-fade-in ${scanResult === 'SUCCESS' ? 'border-green-500/40' : 'border-white/10'}`}>
+                                {/* Header */}
+                                <div className={`px-4 py-3 text-center ${scanResult === 'SUCCESS' ? 'bg-green-900/40' : 'bg-white/5'}`}>
+                                    <h3 className="text-white font-bold text-base">
+                                        {scanResult === 'SUCCESS' ? '✅ Validated' : '📋 Info'}
+                                    </h3>
+                                </div>
+
+                                {/* Student Details */}
+                                <div className="p-4 space-y-2 text-sm border-b border-white/10">
+                                    <div className="flex justify-between">
+                                        <span className="text-gray-400">Name:</span>
+                                        <span className="text-white font-medium">{scannedCoupon.studentId?.name || 'Unknown'}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-gray-400">Dept:</span>
+                                        <span className="text-white">{scannedCoupon.department?.toUpperCase()}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-gray-400">Status:</span>
+                                        <span className={`font-bold uppercase ${scannedCoupon.status === 'active' ? 'text-green-400' :
+                                            scannedCoupon.status === 'redeemed' ? 'text-blue-400' : 'text-red-400'
+                                            }`}>{scannedCoupon.status}</span>
+                                    </div>
+                                </div>
+
+                                {/* Meal Details */}
+                                <div className="p-4 bg-orange-950/20">
+                                    <div className="flex justify-between items-center mb-1">
+                                        <span className="text-gray-400 text-xs uppercase">Meal:</span>
+                                        <span className="text-orange-300 font-bold">
+                                            {scannedCoupon.mealType === 'Rice' ? 'Rice' : 'Kanji'}
+                                        </span>
+                                    </div>
+                                    <div className="flex flex-wrap gap-1 justify-end">
+                                        {scannedCoupon.sideDishes?.map((side: string, i: number) => (
+                                            <span key={i} className="bg-orange-900/50 border border-orange-500/30 text-orange-200 text-[10px] px-1.5 py-0.5 rounded-full">
+                                                {side}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             )}
 
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 max-w-2xl mx-auto relative">
-                <div className="glass-panel p-6 text-center border border-orange-500/30 bg-orange-900/20">
-                    <p className="text-orange-300 font-semibold mb-2">Estimated Meals</p>
-                    <p className="text-4xl font-bold text-orange-400">{stats.polledCount}</p>
-                    <p className="text-xs text-orange-300/70 mt-2">Based on student polls</p>
-                </div>
-                <div className="glass-panel p-6 text-center border border-indigo-500/30 bg-indigo-900/20">
-                    <p className="text-indigo-300 font-semibold mb-2">Meals Served Today</p>
-                    <p className="text-4xl font-bold text-indigo-400">{stats.redeemedCount}</p>
-                    <p className="text-xs text-indigo-300/70 mt-2">Coupons redeemed</p>
-                </div>
-
-                {showFinance && (
-                    <>
-                        <div className="glass-panel p-6 text-center border border-cyan-500/30 bg-cyan-900/20">
-                            <p className="text-cyan-300 font-semibold mb-2">Pre-paid Meals</p>
-                            <p className="text-4xl font-bold text-cyan-400">{stats.paidCount || 0}</p>
-                            <p className="text-xs text-cyan-300/70 mt-2">Active + Redeemed</p>
-                        </div>
-                        <div className="glass-panel p-6 text-center border border-rose-500/30 bg-rose-900/20">
-                            <p className="text-rose-300 font-semibold mb-2">Total Revenue (₹)</p>
-                            <p className="text-4xl font-bold text-rose-400">₹{stats.revenue || 0}</p>
-                            <p className="text-xs text-rose-300/70 mt-2">Today's Collection</p>
-                        </div>
-                    </>
-                )}
-            </div>
-
+            {/* Modals outside of conditional rendering to ensure they work in both views */}
             {/* Set Meal Modal */}
             {showMealModal && (
-                <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+                <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[100] p-4">
                     <div className="glass-panel p-6 w-full max-w-sm mx-auto">
                         <h3 className="text-lg font-bold mb-4 text-white">Set Tomorrow's Menu</h3>
 
@@ -387,7 +584,7 @@ export default function CanteenDashboard({ user }: { user: any }) {
 
             {/* Set Status Modal */}
             {showStatusModal && (
-                <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+                <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[100] p-4">
                     <div className="glass-panel p-6 w-full max-w-sm">
                         <h3 className="text-lg font-bold mb-4 text-white">
                             {settings.isOpen ? 'Close Canteen for Tomorrow?' : 'Re-open Canteen?'}
@@ -422,147 +619,6 @@ export default function CanteenDashboard({ user }: { user: any }) {
                     </div>
                 </div>
             )}
-
-
-            <div className="glass-panel p-8 max-w-md mx-auto">
-                <h2 className="text-xl font-semibold mb-2 text-center text-white">Coupon Validation</h2>
-                <p className="text-gray-400 text-center mb-6 text-sm">Scan or enter code to redeem</p>
-
-                <button
-                    onClick={() => setShowScanner(!showScanner)}
-                    className="w-full mb-6 p-4 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold rounded-xl shadow-lg transition-all flex items-center justify-center gap-2"
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2" /><path d="M17 3h2a2 2 0 0 1 2 2v2" /><path d="M21 17v2a2 2 0 0 1-2 2h-2" /><path d="M3 17v2a2 2 0 0 1 2 2h2" /><path d="M8 12h8" /><path d="M12 8v8" /></svg>
-                    {showScanner ? 'Close Scanner' : 'Validate Coupon'}
-                </button>
-
-                {message && !showMealModal && !showStatusModal && (
-                    <div className={`p-4 mb-6 rounded text-center font-bold ${scanResult === 'SUCCESS' ? 'bg-green-500/20 text-green-300 border border-green-500/30' :
-                        message.includes('Updated') ? 'bg-blue-500/20 text-blue-300' :
-                            'bg-red-500/20 text-red-300 border border-red-500/30'
-                        }`}>
-                        {message}
-                    </div>
-                )}
-
-                {/* Scanner Section */}
-                {showScanner && (
-                    <div className="mb-6 rounded-lg overflow-hidden border border-white/20 relative bg-black">
-                        <Scanner
-                            onScan={handleScan}
-                            onError={(error) => console.log(error?.message)}
-                            components={{
-                                onOff: false,
-                                torch: false,
-                                zoom: false,
-                                finder: true,
-                            }}
-                            styles={{
-                                container: { width: '100%', height: '300px' },
-                                video: { width: '100%', height: '300px', objectFit: 'cover' }
-                            }}
-                        />
-                        <button
-                            onClick={() => setShowScanner(false)}
-                            className="absolute top-2 right-2 bg-black/50 text-white p-2 rounded-full z-10 hover:bg-black/70"
-                        >
-                            ✕
-                        </button>
-                    </div>
-                )}
-
-                <div className="relative flex py-2 items-center">
-                    <div className="flex-grow border-t border-gray-600"></div>
-                    <span className="flex-shrink-0 mx-4 text-gray-400 text-sm">Or enter manually</span>
-                    <div className="flex-grow border-t border-gray-600"></div>
-                </div>
-
-                <form onSubmit={(e) => handleAction(e)} className="space-y-4 mt-4">
-                    <input
-                        type="text"
-                        placeholder="Enter Coupon Code (e.g. MEAL-XYZ)"
-                        className="glass-input text-center text-lg tracking-widest uppercase"
-                        value={couponCode}
-                        onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                    />
-
-                    <div className="pt-2">
-                        <button
-                            type="submit"
-                            disabled={loading || !couponCode}
-                            className={`glass-button bg-green-600 w-full hover:bg-green-700 border border-green-500 ${loading ? 'opacity-50' : ''}`}
-                        >
-                            {loading ? 'Processing...' : 'Validate Coupon'}
-                        </button>
-                    </div>
-                </form>
-
-                {/* Display Scanned/Validated Coupon Details */}
-                {scannedCoupon && (
-                    <div className={`mt-6 rounded-xl overflow-hidden border animate-fade-in ${scanResult === 'SUCCESS' ? 'border-green-500/40' : 'border-white/10'}`}>
-                        {/* Header */}
-                        <div className={`px-4 py-3 text-center ${scanResult === 'SUCCESS' ? 'bg-green-900/40' : 'bg-white/5'}`}>
-                            <h3 className="text-white font-bold text-base">
-                                {scanResult === 'SUCCESS' ? '✅ Coupon Validated' : '📋 Coupon Info'}
-                            </h3>
-                        </div>
-
-                        {/* Student Details */}
-                        <div className="p-4 space-y-2 text-sm border-b border-white/10">
-                            <p className="text-xs text-gray-500 uppercase font-bold tracking-widest mb-2">Student</p>
-                            <div className="flex justify-between">
-                                <span className="text-gray-400">Name:</span>
-                                <span className="text-white font-medium">{scannedCoupon.studentId?.name || 'Unknown'}</span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span className="text-gray-400">Department:</span>
-                                <span className="text-white">{scannedCoupon.department?.toUpperCase()}</span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span className="text-gray-400">Status:</span>
-                                <span className={`font-bold uppercase ${scannedCoupon.status === 'active' ? 'text-green-400' :
-                                    scannedCoupon.status === 'redeemed' ? 'text-blue-400' : 'text-red-400'
-                                    }`}>{scannedCoupon.status}</span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span className="text-gray-400">Valid Date:</span>
-                                <span className="text-white">{new Date(scannedCoupon.validForDate).toDateString()}</span>
-                            </div>
-                        </div>
-
-                        {/* Meal Details */}
-                        <div className="p-4 space-y-2 text-sm bg-orange-950/20">
-                            <p className="text-xs text-orange-400 uppercase font-bold tracking-widest mb-2">🍽️ Meal Details</p>
-                            <div className="flex justify-between items-center">
-                                <span className="text-gray-400">Main Dish:</span>
-                                <span className="text-orange-300 font-bold text-base">
-                                    {scannedCoupon.mealType === 'Rice'
-                                        ? '🍚 Rice (ചോറ്)'
-                                        : scannedCoupon.mealType === 'Porridge'
-                                            ? '🥣 Kanji (കഞ്ഞി)'
-                                            : scannedCoupon.mealType || '🍚 Rice (ചോറ്)'}
-                                </span>
-                            </div>
-                            <div className="flex justify-between items-start">
-                                <span className="text-gray-400 mt-1">Side Dishes:</span>
-                                <div className="text-right">
-                                    {scannedCoupon.sideDishes && scannedCoupon.sideDishes.length > 0 ? (
-                                        <div className="flex flex-wrap gap-1 justify-end max-w-[180px]">
-                                            {scannedCoupon.sideDishes.map((side: string, i: number) => (
-                                                <span key={i} className="bg-orange-900/50 border border-orange-500/30 text-orange-200 text-xs px-2 py-0.5 rounded-full">
-                                                    {side}
-                                                </span>
-                                            ))}
-                                        </div>
-                                    ) : (
-                                        <span className="text-gray-500 text-xs">No sides listed</span>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )}
-            </div>
         </div>
     );
 }

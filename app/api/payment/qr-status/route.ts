@@ -6,6 +6,9 @@ import { authOptions } from '@/lib/auth';
 import connectToDatabase from '@/lib/db';
 import Coupon from '@/models/Coupon';
 import SystemSettings from '@/models/SystemSettings';
+import User from '@/models/User';
+import { sendWhatsApp } from '@/lib/notify';
+import { isBookingOpen } from '@/lib/time';
 
 export async function GET(req: NextRequest) {
     try {
@@ -13,6 +16,8 @@ export async function GET(req: NextRequest) {
         if (!session) {
             return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
         }
+
+        const user = session.user as any;
 
         const { searchParams } = new URL(req.url);
         const paymentLinkId = searchParams.get('paymentLinkId');
@@ -39,7 +44,6 @@ export async function GET(req: NextRequest) {
 
         // Generate coupon
         await connectToDatabase();
-        const user = session.user as any;
 
         const tomorrow = new Date();
         tomorrow.setDate(tomorrow.getDate() + 1);
@@ -76,6 +80,13 @@ export async function GET(req: NextRequest) {
                 sideDishes,
                 paymentId,
             });
+        }
+
+        // Send WhatsApp Notification
+        const student = await User.findById(user.id);
+        if (student && student.phone) {
+            const dateStr = new Date(tomorrow).toLocaleDateString();
+            await sendWhatsApp(student.phone, `Success! 💳 Your UPI payment of ₹10 is verified. Coupon ${coupon.code} for ${mealType} on ${dateStr} is now ACTIVE! 🍽️`);
         }
 
         return NextResponse.json({ paid: true, coupon });
