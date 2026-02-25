@@ -5,6 +5,8 @@ import StudentDashboard from '@/components/dashboard/StudentDashboard';
 import DeptAdminDashboard from '@/components/dashboard/DeptAdminDashboard';
 import SuperAdminDashboard from '@/components/dashboard/SuperAdminDashboard';
 import CanteenDashboard from '@/components/dashboard/CanteenDashboard';
+import connectToDatabase from '@/lib/db';
+import User from '@/models/User';
 
 export default async function DashboardPage() {
     const session = await getServerSession(authOptions);
@@ -14,11 +16,29 @@ export default async function DashboardPage() {
     }
 
     const role = (session.user as any).role;
+    const userId = (session.user as any).id;
 
-    if (role === 'student') return <StudentDashboard user={session.user} />;
-    if (role === 'dept_admin') return <DeptAdminDashboard user={session.user} />;
-    if (role === 'super_admin') return <SuperAdminDashboard user={session.user} />;
-    if (role === 'canteen_staff') return <CanteenDashboard user={session.user} />;
+    // Fetch full user from DB to get walletBalance and latest data
+    let fullUser = { ...session.user } as any;
+    try {
+        await connectToDatabase();
+        const dbUser = await User.findById(userId).lean();
+        if (dbUser) {
+            fullUser = {
+                ...fullUser,
+                walletBalance: (dbUser as any).walletBalance ?? 0,
+                phone: (dbUser as any).phone || '',
+                program: (dbUser as any).program || '',
+            };
+        }
+    } catch (e) {
+        console.error('Failed to fetch user from DB:', e);
+    }
+
+    if (role === 'student') return <StudentDashboard user={fullUser} />;
+    if (role === 'dept_admin') return <DeptAdminDashboard user={fullUser} />;
+    if (role === 'super_admin') return <SuperAdminDashboard user={fullUser} />;
+    if (role === 'canteen_staff') return <CanteenDashboard user={fullUser} />;
 
     return <div>Unknown Role</div>;
 }

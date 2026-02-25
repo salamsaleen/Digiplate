@@ -97,8 +97,9 @@ export default function DeptAdminDashboard({ user }: { user: any }) {
     const filteredPolls = polls.filter(p => p.department === user.department);
     const filteredApproved = approved.filter(c => c.department === user.department);
     const deptStudents = students.filter(s => s.department === user.department);
-    const ugStudents = deptStudents.filter(s => s.program === 'ug' || !s.program);
-    const pgStudents = deptStudents.filter(s => s.program === 'pg');
+    const registeredStudents = deptStudents.filter(s => s.role === 'student');
+    const ugStudents = registeredStudents.filter(s => s.program === 'ug' || !s.program);
+    const pgStudents = registeredStudents.filter(s => s.program === 'pg');
 
     return (
         <div className="p-6 min-h-screen relative">
@@ -257,7 +258,7 @@ export default function DeptAdminDashboard({ user }: { user: any }) {
                     </button>
 
                     <div className="glass-panel p-6">
-                        <h2 className="text-xl font-semibold mb-4 text-white">Registered Students ({deptStudents.length})</h2>
+                        <h2 className="text-xl font-semibold mb-4 text-white">Registered Students ({registeredStudents.length})</h2>
                         {isDividedDept ? (
                             <div className="flex flex-col gap-6">
                                 <div>
@@ -285,7 +286,7 @@ export default function DeptAdminDashboard({ user }: { user: any }) {
                             </div>
                         ) : (
                             <div className="overflow-y-auto max-h-[600px] space-y-3 pr-2">
-                                {deptStudents.map((student: any) => (
+                                {registeredStudents.map((student: any) => (
                                     <div key={student._id} className="flex justify-between items-center p-3 bg-white/5 rounded border border-white/10">
                                         <div><p className="font-bold text-gray-200">{student.name}</p><p className="text-sm text-gray-400">{student.email}</p></div>
                                         <button onClick={() => handleDelete(student._id)} className="bg-red-500/20 text-red-300 px-3 py-1 rounded text-sm border border-red-500/30">Delete</button>

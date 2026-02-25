@@ -7,6 +7,13 @@ export function getISTDate(): Date {
 }
 
 export function isBookingOpen(email?: string): { open: boolean; message?: string } {
+
+    // ✅ GLOBAL BYPASS: If Razorpay is in test mode, skip all time restrictions
+    if (process.env.RAZORPAY_KEY_ID?.startsWith('rzp_test_')) {
+        console.log('[TIME_LOG] Razorpay test mode detected — bypassing time restriction');
+        return { open: true };
+    }
+
     const istDate = getISTDate();
     const hours = istDate.getHours();
 
@@ -28,6 +35,7 @@ export function isBookingOpen(email?: string): { open: boolean; message?: string
         message: 'Polling is only open from 3:00 PM to 8:00 PM'
     };
 }
+
 
 export function getNextLunchDate(): Date {
     const istDate = getISTDate();
