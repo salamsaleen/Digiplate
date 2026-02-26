@@ -81,7 +81,7 @@ export async function POST(req: NextRequest) {
         } else if (action === 'pay_direct') {
             if (existing) {
                 if (existing.status === 'active' || existing.status === 'redeemed' || existing.status === 'approved') {
-                    return NextResponse.json({ message: 'You already have a valid coupon for tomorrow.', coupon: existing }, { status: 400 });
+                    return NextResponse.json({ message: 'You already have a valid coupon for tomorrow.', coupon: existing }, { status: 200 });
                 }
             }
 

@@ -1,6 +1,7 @@
 import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth';
+import { Suspense } from 'react';
 import StudentDashboard from '@/components/dashboard/StudentDashboard';
 import DeptAdminDashboard from '@/components/dashboard/DeptAdminDashboard';
 import SuperAdminDashboard from '@/components/dashboard/SuperAdminDashboard';
@@ -35,7 +36,11 @@ export default async function DashboardPage() {
         console.error('Failed to fetch user from DB:', e);
     }
 
-    if (role === 'student') return <StudentDashboard user={fullUser} />;
+    if (role === 'student') return (
+        <Suspense fallback={<div className="p-8 text-white text-center">Loading...</div>}>
+            <StudentDashboard user={fullUser} />
+        </Suspense>
+    );
     if (role === 'dept_admin') return <DeptAdminDashboard user={fullUser} />;
     if (role === 'super_admin') return <SuperAdminDashboard user={fullUser} />;
     if (role === 'canteen_staff') return <CanteenDashboard user={fullUser} />;

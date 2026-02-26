@@ -1,7 +1,9 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import QRCode from 'react-qr-code';
+import { useRouter } from 'next/navigation';
 
 export default function StudentDashboard({ user }: { user: any }) {
     const [coupon, setCoupon] = useState<any>(null);
@@ -19,11 +21,64 @@ export default function StudentDashboard({ user }: { user: any }) {
     const [settings, setSettings] = useState<any>({ mealType: 'Rice', isOpen: true, closingReason: '' });
     const [settingsLoaded, setSettingsLoaded] = useState(false);
 
+    const searchParams = useSearchParams();
+    const router = useRouter();
+
+    // Ref to the coupon card — used to scroll into view after payment
+    const couponRef = useRef<HTMLDivElement | null>(null);
+    // Flag: scroll to coupon on next render
+    const pendingScrollRef = useRef(false);
+
     useEffect(() => {
         fetchCoupon();
         fetchSettings();
         return () => stopPolling();
     }, []);
+
+    // Handle Razorpay redirect back to dashboard after payment
+    // Razorpay appends ?razorpay_payment_link_status=paid&razorpay_payment_link_id=...
+    useEffect(() => {
+        const paymentStatus = searchParams.get('razorpay_payment_link_status');
+        const paymentLinkIdParams = searchParams.get('razorpay_payment_link_id');
+
+        if (paymentStatus === 'paid' && paymentLinkIdParams) {
+            setMessage('✅ Verifying payment securely...');
+
+            // Hit the qr-status endpoint to verify the payment and generate the coupon
+            fetch(`/api/payment/qr-status?paymentLinkId=${paymentLinkIdParams}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.paid && data.coupon) {
+                        pendingScrollRef.current = true;
+                        setCoupon(data.coupon);
+                        setMessage('✅ Payment Successful! Your meal coupon is ready.');
+                    } else {
+                        pendingScrollRef.current = true;
+                        fetchCoupon(); // Fallback
+                    }
+                })
+                .catch(err => {
+                    console.error('Failed to verify payment link redirect', err);
+                    fetchCoupon(); // Fallback
+                })
+                .finally(() => {
+                    // Clean the URL so params don't persist on refresh
+                    window.history.replaceState({}, '', '/dashboard');
+                });
+        }
+    }, [searchParams]);
+
+    // Scroll to coupon card whenever coupon state changes AND a scroll is pending
+    useEffect(() => {
+        if (coupon && pendingScrollRef.current) {
+            pendingScrollRef.current = false;
+            // Small timeout lets React flush the DOM update first
+            setTimeout(() => {
+                couponRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
+        }
+    }, [coupon]);
+
 
     // Auto-poll Razorpay Payment Link status every 3 seconds
     useEffect(() => {
@@ -37,8 +92,15 @@ export default function StudentDashboard({ user }: { user: any }) {
                 if (data.paid) {
                     stopPolling();
                     setShowQrModal(false);
-                    setCoupon(data.coupon);
                     setMessage('✅ Payment Successful! Your meal coupon is ready.');
+                    pendingScrollRef.current = true;
+                    // Use coupon from qr-status response directly (already saved to DB)
+                    if (data.coupon) {
+                        setCoupon(data.coupon);
+                    } else {
+                        // Fallback: fetch from DB
+                        await fetchCoupon();
+                    }
                 }
             } catch (e) {
                 console.error('Poll error:', e);
@@ -54,14 +116,22 @@ export default function StudentDashboard({ user }: { user: any }) {
         }
     };
 
-    async function fetchCoupon() {
+    async function fetchCoupon(retries = 2): Promise<any> {
         try {
             const res = await fetch('/api/coupon/book');
             if (res.ok) {
                 const data = await res.json().catch(() => ({}));
-                if (data.coupon) setCoupon(data.coupon);
+                if (data.coupon) {
+                    setCoupon(data.coupon);
+                    return data.coupon;
+                } else if (retries > 0) {
+                    // Coupon may not be written to DB yet (webhook delay) — retry after 2s
+                    await new Promise(r => setTimeout(r, 2000));
+                    return fetchCoupon(retries - 1);
+                }
             }
         } catch (e) { console.error(e); }
+        return null;
     }
 
     async function fetchSettings() {
@@ -96,14 +166,24 @@ export default function StudentDashboard({ user }: { user: any }) {
                 body: JSON.stringify({ action, mealType: mealToCheck })
             });
             const data = await res.json().catch(() => ({ message: 'Server error (HTML response)' }));
-            if (res.ok) {
+            if (res.ok || data.coupon) {
                 if (action === 'poll') setMessage('Poll Submitted! Now request approval.');
                 if (action === 'request') setMessage('Request Sent! Waiting for Admin Approval.');
                 if (action === 'pay' || action === 'pay_direct') {
-                    setMessage('Payment Successful! Coupon Generated.');
+                    setMessage('✅ Payment Successful! Coupon Generated.');
                     setShowPaymentModal(false);
+                    // Use the coupon already returned in the API response
+                    if (data.coupon) {
+                        pendingScrollRef.current = true;
+                        setCoupon(data.coupon);
+                    } else {
+                        // Fallback: fetch from DB
+                        pendingScrollRef.current = true;
+                        await fetchCoupon();
+                    }
+                } else {
+                    setCoupon(data.coupon);
                 }
-                setCoupon(data.coupon);
             } else {
                 setMessage(`Error: ${data.message}`);
             }
@@ -276,7 +356,7 @@ export default function StudentDashboard({ user }: { user: any }) {
             };
 
             return (
-                <div className="glass-panel p-6 flex flex-col items-center max-w-sm mx-auto border-2 border-green-500/30">
+                <div ref={couponRef} className="glass-panel p-6 flex flex-col items-center max-w-sm mx-auto border-2 border-green-500/30">
                     <div className="w-full border-b border-white/10 pb-4 mb-4 text-center">
                         <h2 className="text-xl font-bold text-green-400">MEAL COUPON</h2>
                         <p className="text-xs text-green-300/70 uppercase tracking-widest mt-1">DigiPlate Verification</p>
@@ -333,9 +413,9 @@ export default function StudentDashboard({ user }: { user: any }) {
                 <span className="text-sm font-medium">Back to Home</span>
             </Link>
 
-            <div className="bg-[#0b121e] p-6 mb-6 flex justify-between items-center rounded-xl border border-gray-800 shadow-lg mt-12">
+            <div className="bg-[#0b121e] p-4 sm:p-6 mb-6 flex flex-wrap justify-between items-center gap-3 rounded-xl border border-gray-800 shadow-lg mt-12">
                 <div>
-                    <h1 className="text-2xl font-bold text-white">Welcome, {user.name}</h1>
+                    <h1 className="text-xl sm:text-2xl font-bold text-white">Welcome, {user.name}</h1>
                     <p className="text-gray-400 text-sm">
                         {{ 'cs': 'B.Sc Computer Science', 'chemistry': 'B.Sc Chemistry', 'commerce': user.program === 'pg' ? 'M.Com' : 'B.Com', 'history': user.program === 'pg' ? 'MA History' : 'BA History', 'economics': user.program === 'pg' ? 'MA Economics' : 'BA Economics', 'jmc': user.program === 'pg' ? 'MA JMC' : 'BA JMC' }[user.department as string] || user.department?.toUpperCase()}
                     </p>
@@ -418,7 +498,7 @@ export default function StudentDashboard({ user }: { user: any }) {
                             ].map((app) => (
                                 <button
                                     key={app.name}
-                                    onClick={() => shortUrl && window.open(shortUrl, '_blank')}
+                                    onClick={() => shortUrl && (window.location.href = shortUrl)}
                                     className="flex flex-col items-center gap-1.5 p-2 rounded-xl hover:bg-white/10 transition-all active:scale-90"
                                 >
                                     <div

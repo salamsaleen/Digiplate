@@ -106,21 +106,6 @@ export default function SuperAdminDashboard({ user }: { user: any }) {
                 ]),
             });
 
-            // 3. Admin Roles
-            doc.addPage();
-            doc.setFontSize(16);
-            doc.text('Registered Admins & Staff', 14, 22);
-            autoTable(doc, {
-                startY: 30,
-                head: [['Name', 'Email', 'Role', 'Department']],
-                body: data.admins.map((a: any) => [
-                    a.name,
-                    a.email,
-                    a.role,
-                    getDeptDisplayName(a.department)
-                ]),
-            });
-
             doc.save(`DigiPlate_Report_${period}_${dateStr}.pdf`);
             setMessage('✅ Report downloaded successfully!');
             setTimeout(() => setMessage(''), 3000);
@@ -189,36 +174,15 @@ export default function SuperAdminDashboard({ user }: { user: any }) {
     };
 
     return (
-        <div className="p-6 min-h-screen relative">
+        <div className="px-3 py-4 sm:p-6 min-h-screen relative">
             <Link href="/" className="absolute top-4 left-4 flex items-center gap-2 px-4 py-2 bg-gray-800/80 backdrop-blur-md rounded-full border border-gray-700 hover:bg-gray-700/80 text-gray-300 hover:text-white transition-all shadow-lg group z-50">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="group-hover:-translate-x-1 transition-transform"><path d="m11 17-5-5 5-5" /><path d="m18 17-5-5 5-5" /></svg>
                 <span className="text-sm font-medium">Back to Home</span>
             </Link>
 
-            <div className="absolute top-4 right-4 z-50" ref={menuRef}>
-                <button
-                    onClick={() => setShowMenu(!showMenu)}
-                    className="p-2 bg-gray-800/80 backdrop-blur-md rounded-full border border-gray-700 hover:bg-gray-700/80 text-gray-300 transition-all shadow-lg"
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1" /><circle cx="12" cy="5" r="1" /><circle cx="12" cy="19" r="1" /></svg>
-                </button>
-                {showMenu && (
-                    <div className="absolute right-0 mt-2 w-48 bg-gray-900 border border-gray-700 rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
-                        <div className="p-2 text-xs font-bold text-gray-500 uppercase border-b border-gray-800">Download Reports</div>
-                        <button onClick={() => generatePDF('daily')} className="w-full text-left px-4 py-3 text-sm text-gray-300 hover:bg-indigo-600 hover:text-white transition-colors flex items-center gap-2">
-                            <span>📄</span> Daily Status
-                        </button>
-                        <button onClick={() => generatePDF('weekly')} className="w-full text-left px-4 py-3 text-sm text-gray-300 hover:bg-indigo-600 hover:text-white transition-colors flex items-center gap-2">
-                            <span>📅</span> Weekly Status
-                        </button>
-                        <button onClick={() => generatePDF('monthly')} className="w-full text-left px-4 py-3 text-sm text-gray-300 hover:bg-indigo-600 hover:text-white transition-colors flex items-center gap-2">
-                            <span>📊</span> Monthly Status
-                        </button>
-                    </div>
-                )}
-            </div>
-
-            <div className="absolute top-4 right-16 z-50">
+            {/* Top-right action buttons — stacks safely on mobile */}
+            <div className="absolute top-4 right-4 z-50 flex items-center gap-2" ref={menuRef}>
+                {/* Send Reminders */}
                 <button
                     onClick={async () => {
                         if (!confirm('Send polling reminders to all pending students via WhatsApp?')) return;
@@ -239,14 +203,35 @@ export default function SuperAdminDashboard({ user }: { user: any }) {
                             }
                         } catch (err) { setMessage('❌ Network error'); }
                     }}
-                    className="flex items-center gap-2 px-4 py-2 bg-indigo-600/80 backdrop-blur-md rounded-full border border-indigo-400/50 hover:bg-indigo-500 text-white transition-all shadow-lg text-xs font-bold"
+                    className="hidden sm:flex items-center gap-2 px-3 py-2 bg-indigo-600/80 backdrop-blur-md rounded-full border border-indigo-400/50 hover:bg-indigo-500 text-white transition-all shadow-lg text-xs font-bold"
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m22 2-7 20-4-9-9-4Z" /><path d="M22 2 11 13" /></svg>
-                    Send Reminders
+                    Reminders
                 </button>
+                {/* Report Download Menu */}
+                <button
+                    onClick={() => setShowMenu(!showMenu)}
+                    className="p-2 bg-gray-800/80 backdrop-blur-md rounded-full border border-gray-700 hover:bg-gray-700/80 text-gray-300 transition-all shadow-lg"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1" /><circle cx="12" cy="5" r="1" /><circle cx="12" cy="19" r="1" /></svg>
+                </button>
+                {showMenu && (
+                    <div className="absolute right-0 top-10 w-48 bg-gray-900 border border-gray-700 rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                        <div className="p-2 text-xs font-bold text-gray-500 uppercase border-b border-gray-800">Download Reports</div>
+                        <button onClick={() => generatePDF('daily')} className="w-full text-left px-4 py-3 text-sm text-gray-300 hover:bg-indigo-600 hover:text-white transition-colors flex items-center gap-2">
+                            <span>📄</span> Daily Status
+                        </button>
+                        <button onClick={() => generatePDF('weekly')} className="w-full text-left px-4 py-3 text-sm text-gray-300 hover:bg-indigo-600 hover:text-white transition-colors flex items-center gap-2">
+                            <span>📅</span> Weekly Status
+                        </button>
+                        <button onClick={() => generatePDF('monthly')} className="w-full text-left px-4 py-3 text-sm text-gray-300 hover:bg-indigo-600 hover:text-white transition-colors flex items-center gap-2">
+                            <span>📊</span> Monthly Status
+                        </button>
+                    </div>
+                )}
             </div>
 
-            <h1 className="text-3xl font-bold mb-6 text-white mt-8">Super Admin Dashboard</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold mb-6 text-white mt-14 sm:mt-8">Super Admin Dashboard</h1>
             {message && message.includes('Generating') && (
                 <div className="mb-4 p-3 bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 rounded-xl animate-pulse text-sm text-center">
                     {message}
@@ -286,6 +271,8 @@ export default function SuperAdminDashboard({ user }: { user: any }) {
                             <span>Registered Admins</span>
                         </button>
                     </div>
+
+
 
                     <div className="glass-panel p-6 h-fit bg-gradient-to-br from-indigo-900/40 to-purple-900/40">
                         <h2 className="text-xl font-semibold mb-6 text-white border-b border-white/10 pb-2">Platform Stats (Live)</h2>

@@ -171,44 +171,6 @@ export default function DeptAdminDashboard({ user }: { user: any }) {
                         </div>
                     </div>
 
-                    <div className="glass-panel p-6">
-                        <h2 className="text-xl font-semibold mb-4 text-white">Registered Students ({deptStudents.length})</h2>
-                        {isDividedDept ? (
-                            <div className="flex flex-col gap-6">
-                                <div>
-                                    <h3 className="text-lg font-medium text-blue-300 mb-2 border-b border-blue-500/30 pb-1">UG Students</h3>
-                                    <div className="overflow-y-auto max-h-[300px] space-y-3 pr-2">
-                                        {ugStudents.map((student: any) => (
-                                            <div key={student._id} className="flex justify-between items-center p-3 bg-white/5 rounded border border-white/10">
-                                                <div><p className="font-bold text-gray-200">{student.name}</p><p className="text-sm text-gray-400">{student.email}</p></div>
-                                                <button onClick={() => handleDelete(student._id)} className="bg-red-500/20 text-red-300 px-3 py-1 rounded text-sm border border-red-500/30">Delete</button>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                                <div>
-                                    <h3 className="text-lg font-medium text-pink-300 mb-2 border-b border-pink-500/30 pb-1">PG Students</h3>
-                                    <div className="overflow-y-auto max-h-[300px] space-y-3 pr-2">
-                                        {pgStudents.map((student: any) => (
-                                            <div key={student._id} className="flex justify-between items-center p-3 bg-white/5 rounded border border-white/10">
-                                                <div><p className="font-bold text-gray-200">{student.name}</p><p className="text-sm text-gray-400">{student.email}</p></div>
-                                                <button onClick={() => handleDelete(student._id)} className="bg-red-500/20 text-red-300 px-3 py-1 rounded text-sm border border-red-500/30">Delete</button>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="overflow-y-auto max-h-[600px] space-y-3 pr-2">
-                                {deptStudents.map((student: any) => (
-                                    <div key={student._id} className="flex justify-between items-center p-3 bg-white/5 rounded border border-white/10">
-                                        <div><p className="font-bold text-gray-200">{student.name}</p><p className="text-sm text-gray-400">{student.email}</p></div>
-                                        <button onClick={() => handleDelete(student._id)} className="bg-red-500/20 text-red-300 px-3 py-1 rounded text-sm border border-red-500/30">Delete</button>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
                 </div>
             ) : view === 'register' ? (
                 <div className="max-w-2xl mx-auto animate-fade-in">
