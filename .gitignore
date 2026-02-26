@@ -53,3 +53,6 @@ public/worker-*.js
 
 
 .vercel
+
+# Android TWA App
+android_app/

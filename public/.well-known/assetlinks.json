@@ -1,0 +1,14 @@
+[
+    {
+        "relation": [
+            "delegate_permission/common.handle_all_urls"
+        ],
+        "target": {
+            "namespace": "android_app",
+            "package_name": "app.vercel.digiplate.twa",
+            "sha256_cert_fingerprints": [
+                "96:F0:F3:C1:ED:66:09:23:51:F7:0F:CB:E2:4D:8E:AA:4B:1B:7A:11:B1:5C:52:E0:EA:37:0D:4A:8C:7C:C9:68"
+            ]
+        }
+    }
+]
