@@ -256,3 +256,57 @@
         transform: translateY(0) scale(1);
     }
 }
+
+/* Responsive Mobile Adjustments */
+@media (max-width: 640px) {
+    .container {
+        padding: 1rem;
+        min-height: 100dvh;
+    }
+
+    .mainContent {
+        padding: 2rem 1.25rem;
+        gap: 1.5rem;
+        border-radius: 1.25rem;
+    }
+
+    .backgroundWatermark {
+        font-size: 20vw;
+        letter-spacing: 0.5rem;
+    }
+
+    .logoBg {
+        width: 5rem;
+        height: 5rem;
+        border-radius: 1rem;
+    }
+
+    .nmsmLogo {
+        font-size: 2rem;
+        letter-spacing: 0.1rem;
+    }
+
+    .title {
+        font-size: 1.5rem;
+    }
+
+    .loginForm {
+        gap: 1rem;
+    }
+
+    .input {
+        padding: 0.875rem 1rem;
+        font-size: 0.95rem;
+    }
+
+    .button {
+        padding: 0.875rem;
+        font-size: 0.95rem;
+        margin-top: 0.5rem;
+    }
+
+    .footer {
+        bottom: 1rem;
+        font-size: 0.7rem;
+    }
+}

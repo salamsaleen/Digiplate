@@ -116,6 +116,14 @@ body {
   }
 }
 
+/* Mobile responsive adjustments for global elements */
+@media (max-width: 640px) {
+  .glass-button {
+    padding: 0.6rem 1rem;
+    font-size: 0.9rem;
+  }
+}
+
 /* Scrollbar Customization */
 ::-webkit-scrollbar {
   width: 8px;
