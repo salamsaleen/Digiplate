@@ -8,7 +8,7 @@ import Coupon from '@/models/Coupon';
 import SystemSettings from '@/models/SystemSettings';
 import User from '@/models/User';
 import { sendWhatsApp } from '@/lib/notify';
-import { isBookingOpen } from '@/lib/time';
+import { isBookingOpen, getNextLunchDate } from '@/lib/time';
 
 export async function GET(req: NextRequest) {
     try {
@@ -45,10 +45,9 @@ export async function GET(req: NextRequest) {
         // Generate coupon
         await connectToDatabase();
 
-        const tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        const start = new Date(tomorrow); start.setHours(0, 0, 0, 0);
-        const end = new Date(tomorrow); end.setHours(23, 59, 59, 999);
+        const lunchDate = getNextLunchDate();
+        const start = new Date(lunchDate); start.setHours(0, 0, 0, 0);
+        const end = new Date(lunchDate); end.setHours(23, 59, 59, 999);
 
         const settings = await SystemSettings.findOne({ date: { $gte: start, $lt: end } });
         const sideDishes = settings?.sideDishes || ['പപ്പടം', 'അച്ചാർ', 'ഉപ്പേരി'];
@@ -74,7 +73,7 @@ export async function GET(req: NextRequest) {
                 studentId: user.id,
                 department: user.department,
                 status: 'active',
-                validForDate: tomorrow,
+                validForDate: lunchDate,
                 originalOwnerId: user.id,
                 mealType,
                 sideDishes,
@@ -85,7 +84,7 @@ export async function GET(req: NextRequest) {
         // Send WhatsApp Notification
         const student = await User.findById(user.id);
         if (student && student.phone) {
-            const dateStr = new Date(tomorrow).toLocaleDateString();
+            const dateStr = new Date(lunchDate).toLocaleDateString();
             await sendWhatsApp(student.phone, `Success! 💳 Your UPI payment of ₹10 is verified. Coupon ${coupon.code} for ${mealType} on ${dateStr} is now ACTIVE! 🍽️`);
         }
 
