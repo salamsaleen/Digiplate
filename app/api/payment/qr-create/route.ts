@@ -50,8 +50,15 @@ export async function POST(req: NextRequest) {
         // Payment Link expires in 30 minutes
         const expireBy = Math.floor(Date.now() / 1000) + 30 * 60;
 
-        // Base URL for callback — works both locally and on Vercel
-        const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+        // Base URL for callback — dynamically adapts to Vercel production or uses localhost preview
+        let baseUrl = 'http://localhost:3000';
+        if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
+            baseUrl = `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
+        } else if (process.env.VERCEL_URL) {
+            baseUrl = `https://${process.env.VERCEL_URL}`;
+        } else if (process.env.NEXTAUTH_URL && !process.env.NEXTAUTH_URL.includes('localhost')) {
+            baseUrl = process.env.NEXTAUTH_URL;
+        }
 
         // Create a Razorpay Payment Link — Razorpay tracks all payments via this link
         const paymentLink = await (razorpay as any).paymentLink.create({
