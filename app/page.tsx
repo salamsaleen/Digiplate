@@ -7,6 +7,8 @@ import styles from './home.module.css';
 
 export default function Home() {
   const [mounted, setMounted] = useState(false);
+  const [showSplash, setShowSplash] = useState(true);
+  const [showInfo, setShowInfo] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -15,6 +17,9 @@ export default function Home() {
 
   useEffect(() => {
     setMounted(true);
+    // Hide splash screen after 2 seconds
+    const timer = setTimeout(() => setShowSplash(false), 2000);
+    return () => clearTimeout(timer);
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -38,6 +43,71 @@ export default function Home() {
 
   return (
     <div className={styles.container}>
+      {/* Splash Screen Overlay */}
+      {showSplash && (
+        <div className={styles.splashScreen}>
+          <img
+            src="/logo_plate_v2.jpg"
+            alt="DigiPlate Splash"
+            className={styles.splashLogo}
+          />
+        </div>
+      )}
+
+      {/* Info Button (Top Right) */}
+      <button
+        onClick={() => setShowInfo(true)}
+        className={styles.infoButton}
+        aria-label="App Information"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" /></svg>
+      </button>
+
+      {/* Info Modal Overlay */}
+      {showInfo && (
+        <div className={styles.infoModalOverlay} onClick={() => setShowInfo(false)}>
+          <div className={styles.infoModalContent} onClick={e => e.stopPropagation()}>
+            <h2 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" /></svg>
+              About DigiPlate
+            </h2>
+            <p className="text-sm text-gray-300 mb-6 pb-4 border-b border-gray-700">
+              A Premium Digital Canteen Coupon System designed to streamline meal distribution and tracking.
+            </p>
+
+            <h3 className="text-sm font-bold text-indigo-300 uppercase tracking-wider mb-2">Development Team</h3>
+            <p className="text-xs text-gray-400 mb-4 bg-gray-800/50 p-2 rounded-lg border border-gray-700">
+              BSc (Honours) Computer Science<br />2nd Year Students
+            </p>
+
+            <ul className="space-y-3 mb-6">
+              <li className="flex flex-col">
+                <span className="text-sm font-bold text-gray-200">1. Abdul Salam M P</span>
+                <span className="text-xs text-blue-400">Lead Developer</span>
+              </li>
+              <li className="flex flex-col">
+                <span className="text-sm font-bold text-gray-200">2. Muhammed Sinan K P</span>
+                <span className="text-xs text-emerald-400">App Administrator</span>
+              </li>
+              <li className="flex flex-col">
+                <span className="text-sm font-bold text-gray-200">3. Hafeefa</span>
+                <span className="text-xs text-purple-400">Role Manager</span>
+              </li>
+              <li className="flex flex-col">
+                <span className="text-sm font-bold text-gray-200">4. Abin Sagar</span>
+                <span className="text-xs text-rose-400">Security Analyst</span>
+              </li>
+            </ul>
+
+            <button
+              className={styles.modalCloseBtn}
+              onClick={() => setShowInfo(false)}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className={styles.backgroundWatermark}>N M S M</div>
 
@@ -45,13 +115,11 @@ export default function Home() {
 
         <div className={styles.logoSection}>
           {mounted && (
-            <div className="mb-4">
-              <img
-                src="/logo_plate_v2.jpg"
-                alt="DigiPlate Logo"
-                className="w-20 h-20 rounded-xl shadow-xl transition-transform hover:scale-105 duration-300 mx-auto"
-              />
-            </div>
+            <img
+              src="/logo_plate_v2.jpg"
+              alt="DigiPlate Logo"
+              className="w-24 h-24 rounded-2xl shadow-2xl transition-transform hover:scale-105 duration-300 mx-auto border-2 border-white/10"
+            />
           )}
 
           <h1 className={styles.title}>
@@ -59,7 +127,6 @@ export default function Home() {
           </h1>
         </div>
 
-        {/* Login Form using .loginForm instead of .loginCard to match new CSS */}
         <div className={styles.loginForm}>
 
           {error && (
@@ -96,7 +163,7 @@ export default function Home() {
               disabled={loading}
               className={styles.button}
             >
-              {loading ? "Signing In..." : "Access Dashboard"}
+              {loading ? "Signing In..." : "Access System"}
             </button>
           </form>
 
