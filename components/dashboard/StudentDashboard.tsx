@@ -323,20 +323,26 @@ export default function StudentDashboard({ user }: { user: any }) {
                         ctx.textAlign = 'left';
                         ctx.fillStyle = '#ffffff';
                         ctx.font = 'bold 32px Arial';
-                        ctx.fillText(`Student: ${user.name}`, 60, 560);
+                        ctx.fillText(`Student: ${user.name}`, 60, 540);
 
                         ctx.font = 'bold 32px Arial';
                         ctx.fillStyle = '#f97316'; // orange-500
-                        ctx.fillText(`Meal: ${mealDisplay}`, 60, 620);
+                        ctx.fillText(`Meal: ${mealDisplay}`, 60, 590);
+
+                        ctx.fillStyle = '#ffffff';
+                        ctx.font = '24px Arial';
+                        let sideDishesText = coupon.sideDishes?.length > 0 ? coupon.sideDishes.join(', ') : 'No Sides';
+                        if (sideDishesText.length > 40) sideDishesText = sideDishesText.substring(0, 37) + '...';
+                        ctx.fillText(`Sides: ${sideDishesText}`, 60, 640);
 
                         ctx.fillStyle = '#ffffff';
                         ctx.font = '28px Arial';
-                        ctx.fillText(`Date: ${validDate.toLocaleDateString()}`, 60, 680);
+                        ctx.fillText(`Date: ${validDate.toLocaleDateString()}`, 60, 690);
                         ctx.fillText(`Code: ${coupon.code}`, 60, 740);
 
                         ctx.fillStyle = '#94a3b8';
                         ctx.font = '24px Arial';
-                        ctx.fillText(`Valid until 3:00 PM`, 60, 800);
+                        ctx.fillText(`Valid until 3:00 PM`, 60, 790);
 
                         // Branding footer
                         ctx.fillStyle = '#1e293b';
