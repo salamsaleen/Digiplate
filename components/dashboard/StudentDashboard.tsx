@@ -329,7 +329,7 @@ export default function StudentDashboard({ user }: { user: any }) {
                         ctx.fillStyle = '#f97316'; // orange-500
                         ctx.fillText(`Meal: ${mealDisplay}`, 60, 590);
 
-                        ctx.fillStyle = '#ffffff';
+                        ctx.fillStyle = '#fde047'; // yellow-300
                         ctx.font = '24px Arial';
                         let sideDishesText = coupon.sideDishes?.length > 0 ? coupon.sideDishes.join(', ') : 'No Sides';
                         if (sideDishesText.length > 40) sideDishesText = sideDishesText.substring(0, 37) + '...';
