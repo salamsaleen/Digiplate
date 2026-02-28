@@ -83,7 +83,7 @@ export default function Home() {
             <ul className="space-y-3 mb-6">
               <li className="flex flex-col">
                 <span className="text-sm font-bold text-gray-200">1. Abdul Salam M P</span>
-                <span className="text-xs text-blue-400">Lead Developer</span>
+                <span className="text-xs text-blue-400">Founder, Lead Developer</span>
               </li>
               <li className="flex flex-col">
                 <span className="text-sm font-bold text-gray-200">2. Muhammed Sinan K P</span>
