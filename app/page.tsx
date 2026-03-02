@@ -2,7 +2,6 @@
 import { useState, useEffect } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import confetti from 'canvas-confetti';
 // import { UtensilsCrossed, Loader2 } from "lucide-react"; 
 import styles from './home.module.css';
 
@@ -17,36 +16,8 @@ export default function Home() {
   const router = useRouter();
 
   useEffect(() => {
+    // Cool green animation setup
     setMounted(true);
-
-    // Firework animation
-    const duration = 2000;
-    const end = Date.now() + duration;
-
-    const frame = () => {
-      confetti({
-        particleCount: 5,
-        angle: 60,
-        spread: 55,
-        origin: { x: 0 },
-        zIndex: 9999, // Ensure it shows above the splash screen
-        colors: ['#26ccff', '#a25afd', '#ff5e7e', '#88ff5a', '#fcff42', '#ffa62d', '#ff36ff']
-      });
-      confetti({
-        particleCount: 5,
-        angle: 120,
-        spread: 55,
-        origin: { x: 1 },
-        zIndex: 9999, // Ensure it shows above the splash screen
-        colors: ['#26ccff', '#a25afd', '#ff5e7e', '#88ff5a', '#fcff42', '#ffa62d', '#ff36ff']
-      });
-
-      if (Date.now() < end) {
-        requestAnimationFrame(frame);
-      }
-    };
-
-    frame();
 
     // Hide splash screen after 2 seconds
     const timer = setTimeout(() => setShowSplash(false), 2000);
@@ -77,6 +48,8 @@ export default function Home() {
       {/* Splash Screen Overlay */}
       {showSplash && (
         <div className={styles.splashScreen}>
+          <div className={styles.blueRipple1}></div>
+          <div className={styles.blueRipple2}></div>
           <img
             src="/logo_plate_v2.jpg"
             alt="DigiPlate Splash"
