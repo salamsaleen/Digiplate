@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
         }
 
         const { searchParams } = new URL(req.url);
-        const period = searchParams.get('period') || 'daily'; // daily, weekly, monthly
+        const period = searchParams.get('period') || 'daily';
 
         await connectToDatabase();
 
@@ -32,28 +32,46 @@ export async function GET(req: NextRequest) {
         const endDate = new Date();
         endDate.setHours(23, 59, 59, 999);
 
-        // 1. Financial Status / Revenue
-        const coupons = await Coupon.find({
+        const dateFilter = {
             validForDate: { $gte: startDate, $lte: endDate },
             status: { $in: ['active', 'redeemed', 'expired', 'transferred'] }
-        });
+        };
 
-        const totalRevenue = coupons.length * 10;
-        const redeemedCount = coupons.filter(c => c.status === 'redeemed').length;
+        // 1. Financial Summary — use real amountPaid aggregation
+        const financialAgg = await Coupon.aggregate([
+            { $match: dateFilter },
+            {
+                $group: {
+                    _id: null,
+                    totalRevenue: { $sum: '$amountPaid' },
+                    totalCoupons: { $sum: 1 },
+                    redeemedCount: {
+                        $sum: { $cond: [{ $eq: ['$status', 'redeemed'] }, 1, 0] }
+                    }
+                }
+            }
+        ]);
 
-        // 2. Department Breakdown
+        const summary = financialAgg[0] || { totalRevenue: 0, totalCoupons: 0, redeemedCount: 0 };
+
+        // 2. Department Breakdown — use real amountPaid aggregation
         const departments = ['cs', 'chemistry', 'commerce', 'history', 'economics', 'jmc'];
         const deptStats = await Promise.all(departments.map(async (dept) => {
-            const count = await Coupon.countDocuments({
-                department: dept,
-                validForDate: { $gte: startDate, $lte: endDate },
-                status: { $in: ['active', 'redeemed', 'expired', 'transferred'] }
-            });
+            const agg = await Coupon.aggregate([
+                { $match: { ...dateFilter, department: dept } },
+                {
+                    $group: {
+                        _id: null,
+                        coupons: { $sum: 1 },
+                        revenue: { $sum: '$amountPaid' }
+                    }
+                }
+            ]);
             const studentsCount = await User.countDocuments({ department: dept, role: 'student' });
             return {
                 dept,
-                coupons: count,
-                revenue: count * 10,
+                coupons: agg[0]?.coupons || 0,
+                revenue: agg[0]?.revenue || 0,
                 students: studentsCount
             };
         }));
@@ -67,9 +85,9 @@ export async function GET(req: NextRequest) {
             startDate,
             endDate,
             summary: {
-                totalRevenue,
-                totalCoupons: coupons.length,
-                redeemedCount,
+                totalRevenue: summary.totalRevenue,
+                totalCoupons: summary.totalCoupons,
+                redeemedCount: summary.redeemedCount,
             },
             deptStats,
             admins

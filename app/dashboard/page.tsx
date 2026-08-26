@@ -36,6 +36,15 @@ export default async function DashboardPage() {
         console.error('Failed to fetch user from DB:', e);
     }
 
+    // Silently run coupon expiry cleanup on every dashboard load:
+    // - Deletes unpaid 'polled' coupons if past 10:00 AM IST
+    // - Marks 'active' coupons as 'expired' if past 3:00 PM IST
+    try {
+        const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+        await fetch(`${baseUrl}/api/coupon/expire`, { method: 'POST' }).catch(() => {});
+    } catch (_) {}
+
+
     if (role === 'student') return (
         <Suspense fallback={<div className="p-8 text-white text-center">Loading...</div>}>
             <StudentDashboard user={fullUser} />

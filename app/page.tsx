@@ -147,7 +147,7 @@ export default function Home() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className={styles.input}
-                placeholder="student@digiplate.com"
+                placeholder="student@gmail.com"
                 required
               />
             </div>

@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
         }
 
         const { searchParams } = new URL(req.url);
-        const period = searchParams.get('period') || 'daily'; // daily, weekly, monthly
+        const period = searchParams.get('period') || 'daily';
 
         await connectToDatabase();
 
@@ -31,46 +31,76 @@ export async function GET(req: NextRequest) {
         const endDate = new Date();
         endDate.setHours(23, 59, 59, 999);
 
-        // 1. Financial Status
-        const paidCoupons = await Coupon.find({
+        const paidFilter = {
             validForDate: { $gte: startDate, $lte: endDate },
             status: { $in: ['active', 'redeemed', 'transferred', 'expired'] }
-        });
+        };
 
-        const totalRevenue = paidCoupons.length * 10;
-        const prepaidCount = paidCoupons.filter(c => c.status === 'active').length;
+        // 1. Financial Status — use real amountPaid aggregation
+        const financialAgg = await Coupon.aggregate([
+            { $match: paidFilter },
+            {
+                $group: {
+                    _id: null,
+                    totalRevenue: { $sum: '$amountPaid' },
+                    prepaidCount: {
+                        $sum: { $cond: [{ $eq: ['$status', 'active'] }, 1, 0] }
+                    }
+                }
+            }
+        ]);
 
-        // 2. Meal Served Status (Redeemed)
-        const redeemedCoupons = await Coupon.find({
-            redeemedAt: { $gte: startDate, $lte: endDate },
-            status: 'redeemed'
-        });
+        const financial = financialAgg[0] || { totalRevenue: 0, prepaidCount: 0 };
 
-        // 3. Estimated Meal Status (Polled/Requested)
+        // 2. Redeemed count
+        const redeemedAgg = await Coupon.aggregate([
+            {
+                $match: {
+                    redeemedAt: { $gte: startDate, $lte: endDate },
+                    status: 'redeemed'
+                }
+            },
+            { $group: { _id: null, count: { $sum: 1 } } }
+        ]);
+        const redeemedCount = redeemedAgg[0]?.count || 0;
+
+        // 3. Estimated meal count
         const estimatedCount = await Coupon.countDocuments({
             validForDate: { $gte: startDate, $lte: endDate },
             status: { $in: ['polled', 'requested', 'approved', 'active', 'redeemed'] }
         });
+
+        // 4. Department Breakdown — use real amountPaid aggregation
+        const departments = ['cs', 'chemistry', 'commerce', 'history', 'economics', 'jmc'];
+        const deptStats = await Promise.all(departments.map(async (dept) => {
+            const agg = await Coupon.aggregate([
+                { $match: { ...paidFilter, department: dept } },
+                {
+                    $group: {
+                        _id: null,
+                        count: { $sum: 1 },
+                        revenue: { $sum: '$amountPaid' }
+                    }
+                }
+            ]);
+            return {
+                dept,
+                count: agg[0]?.count || 0,
+                revenue: agg[0]?.revenue || 0
+            };
+        }));
 
         return NextResponse.json({
             period,
             startDate,
             endDate,
             summary: {
-                totalRevenue,
-                prepaidCount,
-                redeemedCount: redeemedCoupons.length,
+                totalRevenue: financial.totalRevenue,
+                prepaidCount: financial.prepaidCount,
+                redeemedCount,
                 estimatedCount
             },
-            // Department breakdown for more detail
-            deptStats: await Promise.all(['cs', 'chemistry', 'commerce', 'history', 'economics', 'jmc'].map(async (dept) => {
-                const count = await Coupon.countDocuments({
-                    department: dept,
-                    validForDate: { $gte: startDate, $lte: endDate },
-                    status: { $in: ['active', 'redeemed', 'transferred', 'expired'] }
-                });
-                return { dept, count, revenue: count * 10 };
-            }))
+            deptStats
         });
 
     } catch (error: any) {

@@ -40,6 +40,7 @@ export const authOptions: NextAuthOptions = {
                     email: user.email,
                     role: user.role,
                     department: user.department,
+                    phone: user.phone,
                 };
             }
         })
@@ -51,6 +52,7 @@ export const authOptions: NextAuthOptions = {
                 token.department = user.department;
                 token.id = user.id;
                 token.email = user.email;
+                token.phone = user.phone;
             }
             return token;
         },
@@ -60,6 +62,7 @@ export const authOptions: NextAuthOptions = {
                 (session.user as any).department = token.department;
                 (session.user as any).id = token.id;
                 (session.user as any).email = token.email;
+                (session.user as any).phone = token.phone;
             }
             return session;
         }

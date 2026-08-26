@@ -1,6 +1,5 @@
 
 import { NextRequest, NextResponse } from 'next/server';
-import Razorpay from 'razorpay';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import connectToDatabase from '@/lib/db';
@@ -8,7 +7,8 @@ import Coupon from '@/models/Coupon';
 import SystemSettings from '@/models/SystemSettings';
 import User from '@/models/User';
 import { sendWhatsApp } from '@/lib/notify';
-import { isBookingOpen, getNextLunchDate } from '@/lib/time';
+import { getNextLunchDate, getTodayLunchDate } from '@/lib/time';
+import { fetchPaymentLink } from '@/lib/cashfree';
 
 export async function GET(req: NextRequest) {
     try {
@@ -20,32 +20,40 @@ export async function GET(req: NextRequest) {
         const user = session.user as any;
 
         const { searchParams } = new URL(req.url);
-        const paymentLinkId = searchParams.get('paymentLinkId');
+        const linkId = searchParams.get('linkId');
         const mealType = searchParams.get('mealType') || 'Rice';
 
-        if (!paymentLinkId) {
-            return NextResponse.json({ message: 'Missing paymentLinkId' }, { status: 400 });
+        if (!linkId) {
+            return NextResponse.json({ message: 'Missing linkId' }, { status: 400 });
         }
 
-        const razorpay = new Razorpay({
-            key_id: process.env.RAZORPAY_KEY_ID!,
-            key_secret: process.env.RAZORPAY_KEY_SECRET!,
-        });
+        // Fetch the payment link status from Cashfree
+        const link = await fetchPaymentLink(linkId);
 
-        // Fetch the payment link status from Razorpay
-        const link = await (razorpay as any).paymentLink.fetch(paymentLinkId);
-
-        // 'paid' status means payment was successfully completed
-        if (link.status !== 'paid') {
+        // 'PAID' means payment was successfully completed
+        if (link.link_status !== 'PAID') {
             return NextResponse.json({ paid: false });
         }
 
-        const paymentId = link.payments?.[0]?.payment_id || 'unknown';
+        const paymentId = link.link_orders?.[0]?.order_id || 'unknown';
 
         // Generate coupon
         await connectToDatabase();
 
-        const lunchDate = getNextLunchDate();
+        // Determine the correct lunchDate:
+        // If the student polled yesterday and is paying this morning, look for TODAY's coupon.
+        // Otherwise fall back to next lunch date (Poll & Pay during polling window).
+        const todayDate = getTodayLunchDate();
+        const todayStart = new Date(todayDate); todayStart.setHours(0, 0, 0, 0);
+        const todayEnd = new Date(todayDate); todayEnd.setHours(23, 59, 59, 999);
+
+        const todayPolled = await Coupon.findOne({
+            studentId: user.id,
+            validForDate: { $gte: todayStart, $lt: todayEnd },
+            status: { $in: ['polled', 'approved'] }
+        });
+
+        const lunchDate = todayPolled ? todayDate : getNextLunchDate();
         const start = new Date(lunchDate); start.setHours(0, 0, 0, 0);
         const end = new Date(lunchDate); end.setHours(23, 59, 59, 999);
 
@@ -63,7 +71,9 @@ export async function GET(req: NextRequest) {
         if (existing) {
             existing.status = 'active';
             existing.paymentId = paymentId;
+            existing.orderId = linkId;
             existing.sideDishes = sideDishes;
+            existing.amountPaid = 10;
             if (mealType) existing.mealType = mealType;
             await existing.save();
             coupon = existing;
@@ -78,6 +88,8 @@ export async function GET(req: NextRequest) {
                 mealType,
                 sideDishes,
                 paymentId,
+                orderId: linkId,
+                amountPaid: 10,
             });
         }
 
@@ -91,7 +103,7 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ paid: true, coupon });
 
     } catch (error: any) {
-        console.error('[QR STATUS ERROR]', error);
+        console.error('[CASHFREE_QR_STATUS_ERROR]', error);
         return NextResponse.json({ message: error.message }, { status: 500 });
     }
 }

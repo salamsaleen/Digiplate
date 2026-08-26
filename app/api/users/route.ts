@@ -81,28 +81,44 @@ export async function GET(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
     try {
         const session = await getServerSession(authOptions);
-        if (!session || !((session.user as any).role === 'dept_admin' || (session.user as any).role === 'super_admin')) {
+        const callerRole = (session?.user as any)?.role;
+
+        if (!session || !['dept_admin', 'super_admin'].includes(callerRole)) {
             return NextResponse.json({ message: 'Unauthorized' }, { status: 403 });
         }
 
         const { searchParams } = new URL(req.url);
         const id = searchParams.get('id');
 
-        if (!id) return NextResponse.json({ message: 'ID required' }, { status: 400 });
+        if (!id) return NextResponse.json({ message: 'User ID is required' }, { status: 400 });
 
         await connectToDatabase();
 
-        // If Dept Admin, ensure user belongs to their dept
-        if ((session.user as any).role === 'dept_admin') {
-            const userToDelete = await User.findById(id);
-            if (!userToDelete) return NextResponse.json({ message: 'User not found' }, { status: 404 });
+        const userToDelete = await User.findById(id);
+        if (!userToDelete) {
+            return NextResponse.json({ message: 'User not found' }, { status: 404 });
+        }
+
+        // Never allow deletion of super_admin accounts
+        if (userToDelete.role === 'super_admin') {
+            return NextResponse.json({ message: 'Super admin accounts cannot be deleted' }, { status: 403 });
+        }
+
+        // Dept admins can only delete students in their own department
+        if (callerRole === 'dept_admin') {
+            if (userToDelete.role !== 'student') {
+                return NextResponse.json({ message: 'Dept admins can only delete students' }, { status: 403 });
+            }
             if (userToDelete.department !== (session.user as any).department) {
-                return NextResponse.json({ message: 'Cannot delete student from another department' }, { status: 403 });
+                return NextResponse.json({ message: 'Cannot delete a student from another department' }, { status: 403 });
             }
         }
 
+        // Super admins can delete dept_admin, canteen_staff, and student accounts
         await User.findByIdAndDelete(id);
-        return NextResponse.json({ message: 'User deleted successfully' });
+        return NextResponse.json({
+            message: `${userToDelete.name} (${userToDelete.role.replace('_', ' ')}) deleted successfully`,
+        });
     } catch (error: any) {
         return NextResponse.json({ message: error.message || 'Internal Server Error' }, { status: 500 });
     }

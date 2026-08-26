@@ -11,10 +11,13 @@ export default function StudentDashboard({ user }: { user: any }) {
     const [message, setMessage] = useState('');
     const [showPaymentModal, setShowPaymentModal] = useState(false);
 
+    // Countdown timer for morning payment window
+    const [countdown, setCountdown] = useState('');
+
     // UPI Payment Link state
     const [showQrModal, setShowQrModal] = useState(false);
-    const [shortUrl, setShortUrl] = useState('');
-    const [paymentLinkId, setPaymentLinkId] = useState('');
+    const [linkUrl, setLinkUrl] = useState('');
+    const [linkId, setLinkId] = useState('');
     const pollRef = useRef<NodeJS.Timeout | null>(null);
 
     // Canteen Status State
@@ -35,17 +38,36 @@ export default function StudentDashboard({ user }: { user: any }) {
         return () => stopPolling();
     }, []);
 
-    // Handle Razorpay redirect back to dashboard after payment
-    // Razorpay appends ?razorpay_payment_link_status=paid&razorpay_payment_link_id=...
+    // Live countdown to 10:00 AM IST — shown when student has polled and is on meal morning
     useEffect(() => {
-        const paymentStatus = searchParams.get('razorpay_payment_link_status');
-        const paymentLinkIdParams = searchParams.get('razorpay_payment_link_id');
+        const tick = () => {
+            const now = new Date();
+            const istNow = new Date(now.getTime() + 5.5 * 60 * 60 * 1000);
+            const deadline = new Date(istNow);
+            deadline.setUTCHours(4, 30, 0, 0); // 10:00 AM IST = 04:30 UTC
+            const diff = deadline.getTime() - istNow.getTime();
+            if (diff <= 0) { setCountdown('00:00:00'); return; }
+            const h = Math.floor(diff / 3600000).toString().padStart(2, '0');
+            const m = Math.floor((diff % 3600000) / 60000).toString().padStart(2, '0');
+            const s = Math.floor((diff % 60000) / 1000).toString().padStart(2, '0');
+            setCountdown(`${h}:${m}:${s}`);
+        };
+        tick();
+        const timer = setInterval(tick, 1000);
+        return () => clearInterval(timer);
+    }, []);
 
-        if (paymentStatus === 'paid' && paymentLinkIdParams) {
+    // Handle Cashfree redirect back to dashboard after payment
+    // Cashfree appends ?cf_link_status=PAID&link_id=...
+    useEffect(() => {
+        const paymentStatus = searchParams.get('cf_link_status');
+        const linkIdParam = searchParams.get('link_id');
+
+        if (paymentStatus === 'PAID' && linkIdParam) {
             setMessage('✅ Verifying payment securely...');
 
             // Hit the qr-status endpoint to verify the payment and generate the coupon
-            fetch(`/api/payment/qr-status?paymentLinkId=${paymentLinkIdParams}`)
+            fetch(`/api/payment/qr-status?linkId=${linkIdParam}`)
                 .then(res => res.json())
                 .then(data => {
                     if (data.paid && data.coupon) {
@@ -80,13 +102,13 @@ export default function StudentDashboard({ user }: { user: any }) {
     }, [coupon]);
 
 
-    // Auto-poll Razorpay Payment Link status every 3 seconds
+    // Auto-poll Cashfree Payment Link status every 3 seconds
     useEffect(() => {
-        if (!paymentLinkId || !showQrModal) return;
+        if (!linkId || !showQrModal) return;
         stopPolling();
         pollRef.current = setInterval(async () => {
             try {
-                const res = await fetch(`/api/payment/qr-status?paymentLinkId=${paymentLinkId}&mealType=${settings.mealType}`);
+                const res = await fetch(`/api/payment/qr-status?linkId=${linkId}&mealType=${settings.mealType}`);
                 if (!res.ok) return; // Silent skip for polling error
                 const data = await res.json().catch(() => ({}));
                 if (data.paid) {
@@ -107,7 +129,7 @@ export default function StudentDashboard({ user }: { user: any }) {
             }
         }, 3000);
         return () => stopPolling();
-    }, [paymentLinkId, showQrModal]);
+    }, [linkId, showQrModal]);
 
     const stopPolling = () => {
         if (pollRef.current) {
@@ -194,7 +216,7 @@ export default function StudentDashboard({ user }: { user: any }) {
         }
     };
 
-    // Creates a Razorpay Payment Link → shows QR code of its short URL
+    // Creates a Cashfree Payment Link → shows QR code of its link URL
     const handleUpiQrPayment = async () => {
         setLoading(true);
         setMessage('Creating Payment Link...');
@@ -205,8 +227,8 @@ export default function StudentDashboard({ user }: { user: any }) {
                 throw new Error(err.message || 'Failed to create payment');
             }
             const data = await res.json().catch(() => ({}));
-            setShortUrl(data.shortUrl);
-            setPaymentLinkId(data.paymentLinkId);
+            setLinkUrl(data.linkUrl);
+            setLinkId(data.linkId);
             setShowPaymentModal(false);
             setShowQrModal(true);
             setMessage('');
@@ -222,8 +244,8 @@ export default function StudentDashboard({ user }: { user: any }) {
     const handleCloseQrModal = () => {
         stopPolling();
         setShowQrModal(false);
-        setShortUrl('');
-        setPaymentLinkId('');
+        setLinkUrl('');
+        setLinkId('');
     };
 
     const renderActionArea = () => {
@@ -244,12 +266,62 @@ export default function StudentDashboard({ user }: { user: any }) {
             const mealName = settings.mealType === 'Rice' ? 'Rice (ചോറ്)' : settings.mealType === 'Porridge' ? 'Kanji (കഞ്ഞി)' : settings.mealType;
             const isPolled = coupon?.status === 'polled';
 
+            // Determine current IST hour to show correct state
+            const istHour = new Date(Date.now() + 5.5 * 60 * 60 * 1000).getUTCHours();
+            const isMorningWindow = istHour >= 6 && istHour < 10;   // 6–10 AM: pay for today
+            const isPaymentExpired = istHour >= 10 && isPolled;       // Past 10 AM: poll deleted
+            const isPollingHours = istHour >= 15 && istHour < 20;    // 3–8 PM: poll or pay
+
+            // State: Polled, but payment window has expired (10 AM passed without paying)
+            if (isPaymentExpired) {
+                return (
+                    <div className="p-6 text-center rounded-xl border border-red-500/30 bg-red-900/10 w-full max-w-md mx-auto">
+                        <h2 className="text-xl font-bold text-red-400 mb-3">❌ Payment Window Expired</h2>
+                        <p className="text-gray-300 mb-2">You polled but did not pay before 10:00 AM.</p>
+                        <p className="text-gray-400 text-sm">Your poll has been cancelled. You can poll again from 3:00 PM today for tomorrow's meal.</p>
+                    </div>
+                );
+            }
+
+            // State: Polled yesterday, now it's meal morning (6–10 AM) — show Pay button
+            if (isPolled && isMorningWindow) {
+                return (
+                    <div className="p-6 text-center rounded-xl border border-yellow-500/40 bg-yellow-900/20 w-full max-w-md mx-auto">
+                        <h2 className="text-xl font-bold text-yellow-300 mb-1">⏰ Pay to Confirm Your Meal</h2>
+                        <p className="text-gray-300 text-sm mb-4">You polled! Pay ₹10 before 10:00 AM to activate your coupon.</p>
+                        <div className="bg-black/30 rounded-lg p-3 mb-5 border border-yellow-500/30">
+                            <p className="text-xs text-gray-400 uppercase mb-1">Time Remaining</p>
+                            <p className="text-3xl font-mono font-bold text-yellow-300 animate-pulse">{countdown}</p>
+                            <p className="text-xs text-gray-500 mt-1">Payment closes at 10:00 AM</p>
+                        </div>
+                        <button onClick={() => setShowPaymentModal(true)} disabled={loading}
+                            className="glass-button bg-green-600 hover:bg-green-700 w-full border-2 border-green-400 shadow-[0_0_15px_rgba(34,197,94,0.4)] mb-3">
+                            💰 Pay ₹10 Now (Get Coupon)
+                        </button>
+                        {message && <p className="mt-3 text-sm text-gray-300">{message}</p>}
+                    </div>
+                );
+            }
+
+            // State: Polled, but not yet morning (waiting for next day)
+            if (isPolled && !isMorningWindow) {
+                return (
+                    <div className="p-6 text-center rounded-xl border border-yellow-500/30 bg-yellow-900/20 w-full max-w-md mx-auto">
+                        <h2 className="text-xl font-bold text-yellow-300 mb-2">✅ Polled for Tomorrow!</h2>
+                        <p className="text-gray-300 text-sm mb-1">Come back tomorrow morning between</p>
+                        <p className="text-yellow-400 font-bold text-lg mb-4">6:00 AM – 10:00 AM</p>
+                        <p className="text-gray-400 text-sm">to pay ₹10 and activate your meal coupon. If you don't pay before 10:00 AM, your poll will be cancelled.</p>
+                    </div>
+                );
+            }
+
+            // State: No coupon yet — show booking options during polling hours
             return (
-                <div className={`p-6 text-center rounded-xl shadow-lg border border-gray-700 w-full max-w-md mx-auto ${isPolled ? 'bg-yellow-900/40 border-yellow-500/30' : 'bg-[#0b121e]'}`}>
+                <div className="p-6 text-center rounded-xl shadow-lg border border-gray-700 bg-[#0b121e] w-full max-w-md mx-auto">
                     <h2 className="text-xl font-semibold mb-2 text-white">Meal Booking</h2>
-                    <p className="text-gray-300 mb-1">for Tomorrow ({new Date(new Date().setDate(new Date().getDate() + 1)).toLocaleDateString()})</p>
+                    <p className="text-gray-300 mb-1">for Tomorrow ({new Date(new Date().setDate(new Date().getDate() + 1)).toLocaleDateString('en-IN')})</p>
                     <p className="text-yellow-400 text-sm font-bold mb-4 bg-yellow-900/20 py-1 px-3 rounded-full inline-block border border-yellow-500/30">
-                        🕒 Polling Time: 3:00 PM - 8:00 PM
+                        🕒 Polling Time: 3:00 PM – 8:00 PM
                     </p>
                     <div className="bg-white/5 p-4 rounded-lg mb-6 border border-white/10">
                         <p className="text-gray-400 text-sm uppercase tracking-wide">Tomorrow's Menu</p>
@@ -261,19 +333,25 @@ export default function StudentDashboard({ user }: { user: any }) {
                             </div>
                         )}
                     </div>
-                    <div className="flex flex-col gap-4 max-w-sm mx-auto">
-                        {!isPolled && (
+                    {isPollingHours ? (
+                        <div className="flex flex-col gap-4 max-w-sm mx-auto">
                             <button onClick={() => handleAction('poll')} disabled={loading}
                                 className="glass-button w-full border border-orange-400/50 hover:bg-orange-500/20 text-orange-200">
-                                ✋ Poll Only (I might eat)
+                                ✋ Poll Only
+                                <span className="block text-xs text-orange-300/70 mt-0.5">Pay tomorrow morning (6–10 AM)</span>
                             </button>
-                        )}
-                        <button onClick={() => setShowPaymentModal(true)} disabled={loading}
-                            className="glass-button bg-green-600 hover:bg-green-700 w-full border-2 border-green-400 shadow-[0_0_15px_rgba(34,197,94,0.4)]">
-                            {isPolled ? '💰 Pay Now (Get Coupon)' : '⚡ Poll & Pay Now (Get Coupon)'}
-                        </button>
-                    </div>
-                    {isPolled && <p className="mt-4 text-sm text-yellow-300 bg-yellow-900/20 p-2 rounded border border-yellow-500/30 animate-pulse">⚠️ You have polled! Pay now to confirm your meal.</p>}
+                            <button onClick={() => setShowPaymentModal(true)} disabled={loading}
+                                className="glass-button bg-green-600 hover:bg-green-700 w-full border-2 border-green-400 shadow-[0_0_15px_rgba(34,197,94,0.4)]">
+                                ⚡ Poll & Pay Now (₹10)
+                                <span className="block text-xs text-green-200/70 mt-0.5">Get your coupon immediately</span>
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="text-center">
+                            <p className="text-gray-400 text-sm">Booking opens at <span className="text-yellow-400 font-bold">3:00 PM</span> today.</p>
+                            <button disabled className="mt-4 glass-button bg-gray-700 cursor-not-allowed w-full opacity-50">Booking Not Open Yet</button>
+                        </div>
+                    )}
                     {message && <p className="mt-4 text-sm text-gray-300">{message}</p>}
                 </div>
             );
@@ -473,11 +551,11 @@ export default function StudentDashboard({ user }: { user: any }) {
                             <p className="text-gray-400 text-sm mt-1">Scan the QR code or tap an app below</p>
                         </div>
 
-                        {/* QR Code — encodes Razorpay short URL */}
+                        {/* QR Code — encodes Cashfree payment link URL */}
                         <div className="flex justify-center mb-4">
-                            {shortUrl ? (
+                            {linkUrl ? (
                                 <div className="bg-white p-3 rounded-xl shadow-lg border-4 border-white">
-                                    <QRCode value={shortUrl} size={200} />
+                                    <QRCode value={linkUrl} size={200} />
                                 </div>
                             ) : (
                                 <div className="w-[228px] h-[228px] bg-white/10 rounded-xl flex items-center justify-center">
@@ -492,7 +570,7 @@ export default function StudentDashboard({ user }: { user: any }) {
                             <div className="flex-1 h-px bg-white/10"></div>
                         </div>
 
-                        {/* UPI App Icons — clicking opens Razorpay payment page */}
+                        {/* UPI App Icons — clicking opens Cashfree payment page */}
                         <div className="grid grid-cols-3 gap-3 mb-5">
                             {[
                                 { name: 'PhonePe', icon: '/upi-icons/phonepe.svg', bg: '#5f259f' },
@@ -504,7 +582,7 @@ export default function StudentDashboard({ user }: { user: any }) {
                             ].map((app) => (
                                 <button
                                     key={app.name}
-                                    onClick={() => shortUrl && (window.location.href = shortUrl)}
+                                    onClick={() => linkUrl && (window.location.href = linkUrl)}
                                     className="flex flex-col items-center gap-1.5 p-2 rounded-xl hover:bg-white/10 transition-all active:scale-90"
                                 >
                                     <div
@@ -529,7 +607,7 @@ export default function StudentDashboard({ user }: { user: any }) {
                             <p className="text-blue-300 text-sm font-medium">Waiting for payment confirmation...</p>
                         </div>
 
-                        <p className="text-center text-gray-600 text-xs mb-3">QR code expires in 30 minutes · Powered by Razorpay</p>
+                        <p className="text-center text-gray-600 text-xs mb-3">QR code expires in 30 minutes · Powered by Cashfree</p>
 
                         {/* Cancel */}
                         <button onClick={handleCloseQrModal}

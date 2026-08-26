@@ -43,8 +43,9 @@ const CouponSchema = new Schema({
         type: Schema.Types.ObjectId,
         ref: 'User',
     },
-    paymentId: { type: String }, // Razorpay Payment ID
-    orderId: { type: String },   // Razorpay Order ID
+    paymentId: { type: String }, // Cashfree Order ID (from link_orders[0].order_id)
+    orderId: { type: String },   // Cashfree Payment Link ID
+    amountPaid: { type: Number, default: 10 }, // Actual amount paid in ₹
     createdAt: {
         type: Date,
         default: Date.now,
