@@ -43,7 +43,7 @@ export async function GET(req: NextRequest) {
             {
                 $group: {
                     _id: null,
-                    totalRevenue: { $sum: '$amountPaid' },
+                    totalRevenue: { $sum: { $cond: [{ $gt: ['$amountPaid', 0] }, '$amountPaid', 10] } },
                     totalCoupons: { $sum: 1 },
                     redeemedCount: {
                         $sum: { $cond: [{ $eq: ['$status', 'redeemed'] }, 1, 0] }
@@ -63,7 +63,7 @@ export async function GET(req: NextRequest) {
                     $group: {
                         _id: null,
                         coupons: { $sum: 1 },
-                        revenue: { $sum: '$amountPaid' }
+                        revenue: { $sum: { $cond: [{ $gt: ['$amountPaid', 0] }, '$amountPaid', 10] } }
                     }
                 }
             ]);
