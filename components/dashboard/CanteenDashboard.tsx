@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Scanner } from '@yudiel/react-qr-scanner';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import PushManager from '@/components/PushManager';
 
 export default function CanteenDashboard({ user }: { user: any }) {
     const [couponCode, setCouponCode] = useState('');
@@ -673,6 +674,7 @@ export default function CanteenDashboard({ user }: { user: any }) {
                     </div>
                 </div>
             )}
+            <PushManager />
         </div>
     );
 }

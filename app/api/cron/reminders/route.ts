@@ -45,6 +45,48 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ message: `Payment reminder sent to ${count} students.` });
         }
 
+        if (type === 'canteen_set_meal') {
+            const canteenStaff = await User.find({ role: 'canteen_staff' });
+            for (const staff of canteenStaff) {
+                await sendPushNotification(staff._id.toString(), '🍽️ Reminder: Set tomorrow\'s meal!', 'Polling opens at 3:00 PM. Please set the meal status.');
+            }
+            return NextResponse.json({ message: 'Canteen meal reminder sent.' });
+        }
+
+        if (type === 'canteen_polled') {
+            const todayDate = getTodayLunchDate();
+            const start = new Date(todayDate); start.setHours(0, 0, 0, 0);
+            const end = new Date(todayDate); end.setHours(23, 59, 59, 999);
+
+            const count = await Coupon.countDocuments({
+                validForDate: { $gte: start, $lt: end },
+                status: { $in: ['polled', 'active', 'redeemed', 'approved'] }
+            });
+
+            const canteenStaff = await User.find({ role: 'canteen_staff' });
+            for (const staff of canteenStaff) {
+                await sendPushNotification(staff._id.toString(), '📊 Polling Update', `${count} students have polled for today.`);
+            }
+            return NextResponse.json({ message: `Canteen polled update sent: ${count}` });
+        }
+
+        if (type === 'canteen_confirmed') {
+            const todayDate = getTodayLunchDate();
+            const start = new Date(todayDate); start.setHours(0, 0, 0, 0);
+            const end = new Date(todayDate); end.setHours(23, 59, 59, 999);
+
+            const count = await Coupon.countDocuments({
+                validForDate: { $gte: start, $lt: end },
+                status: { $in: ['active', 'redeemed', 'approved'] }
+            });
+
+            const canteenStaff = await User.find({ role: 'canteen_staff' });
+            for (const staff of canteenStaff) {
+                await sendPushNotification(staff._id.toString(), '✅ Final Count Update', `${count} students have confirmed and paid for today.`);
+            }
+            return NextResponse.json({ message: `Canteen confirmed update sent: ${count}` });
+        }
+
         return NextResponse.json({ message: 'Invalid cron type' }, { status: 400 });
 
     } catch (error: any) {
