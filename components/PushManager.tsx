@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSession } from "next-auth/react";
+import { useSession } from "next-auth/react"; // Can remove this if unused
 
 const publicVapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || "FILL_ME_IN";
 
@@ -21,7 +21,6 @@ function urlBase64ToUint8Array(base64String: string) {
 }
 
 export default function PushManager() {
-    const { data: session } = useSession();
     const [showPrompt, setShowPrompt] = useState(false);
     const [subscribing, setSubscribing] = useState(false);
 
@@ -45,9 +44,7 @@ export default function PushManager() {
         // If we want to be robust, we could always silently sync subscription if granted.
         if (Notification.permission === "granted") {
             subscribeUser(true);
-        }
-
-    }, [session]);
+    }, []);
 
     const subscribeUser = async (silent = false) => {
         if (!("serviceWorker" in navigator)) return;
