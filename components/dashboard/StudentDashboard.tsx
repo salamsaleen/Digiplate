@@ -365,81 +365,56 @@ export default function StudentDashboard({ user }: { user: any }) {
             const validDate = new Date(coupon.validForDate);
 
             const downloadCouponJPEG = () => {
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-                if (!ctx) return;
+                const sideDishesText = coupon.sideDishes?.length > 0 ? coupon.sideDishes.join(', ') : 'No Sides';
+                const dateStr = validDate.toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' });
+                const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(coupon.code)}`;
 
-                canvas.width = 600;
-                canvas.height = 900;
+                const printHtml = `<!DOCTYPE html>
+<html><head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>DigiPlate Coupon - ${coupon.code}</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{background:#0f172a;font-family:Arial,sans-serif;display:flex;justify-content:center;padding:24px}
+    .card{background:#0f172a;color:#fff;width:320px;border-radius:20px;overflow:hidden;border:2px solid #22c55e55;box-shadow:0 0 40px #22c55e22}
+    .hdr{background:#0f172a;border-bottom:1px solid #22c55e44;padding:18px;text-align:center}
+    .hdr h1{color:#22c55e;font-size:20px;font-weight:900;letter-spacing:2px}
+    .hdr p{color:#94a3b8;font-size:9px;letter-spacing:3px;text-transform:uppercase;margin-top:3px}
+    .qr{display:flex;justify-content:center;padding:20px 0 12px}
+    .qr img{border:5px solid #fff;border-radius:10px}
+    .info{padding:0 18px 18px}
+    .row{padding:8px 0;border-bottom:1px solid #ffffff22}
+    .row label{color:#94a3b8;font-size:9px;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:2px}
+    .row .v{color:#fff;font-size:14px;font-weight:bold}
+    .orange{color:#f97316!important}
+    .yellow{color:#fde047!important;font-size:12px!important}
+    .green{color:#4ade80!important;font-size:12px!important}
+    .code{text-align:center;font-family:monospace;letter-spacing:3px;color:#94a3b8;font-size:11px;padding:10px 0 6px}
+    .ftr{background:#1e293b;text-align:center;padding:10px;color:#fff;font-size:9px;font-weight:bold;letter-spacing:1px;text-transform:uppercase}
+    @media print{body{background:#fff}.card{box-shadow:none;border-color:#ccc}}
+  </style>
+</head><body>
+  <div class="card">
+    <div class="hdr"><h1>MEAL COUPON</h1><p>DigiPlate Verification</p></div>
+    <div class="qr"><img src="${qrUrl}" width="200" height="200" alt="QR"/></div>
+    <div class="info">
+      <div class="row"><label>Student Name</label><div class="v">${user.name.replace(/[<>&"]/g, '')}</div></div>
+      <div class="row" style="display:flex;justify-content:space-between">
+        <div><label>Meal</label><div class="v orange">${mealDisplay}</div></div>
+        <div style="text-align:right"><label>Date</label><div class="v">${dateStr}</div></div>
+      </div>
+      <div class="row"><label>Side Dishes</label><div class="v yellow">${sideDishesText}</div></div>
+      <div class="row" style="border:none"><label>Validity</label><div class="v green">Valid until 3:00 PM</div></div>
+      <div class="code">${coupon.code}</div>
+    </div>
+    <div class="ftr">N M S M Govt College Kalpetta</div>
+  </div>
+  <script>window.onload=()=>{setTimeout(()=>window.print(),700)}<\/script>
+</body></html>`;
 
-                // BG
-                ctx.fillStyle = '#0f172a';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-                // Header
-                ctx.fillStyle = '#22c55e';
-                ctx.font = 'bold 50px Arial';
-                ctx.textAlign = 'center';
-                ctx.fillText('MEAL COUPON', canvas.width / 2, 80);
-
-                ctx.fillStyle = '#94a3b8';
-                ctx.font = '20px Arial';
-                ctx.fillText('DIGIPLATE VERIFICATION', canvas.width / 2, 120);
-
-                // QR Code
-                const svg = document.querySelector('.qr-container svg');
-                if (svg) {
-                    const xml = new XMLSerializer().serializeToString(svg);
-                    const svg64 = btoa(unescape(encodeURIComponent(xml)));
-                    const image64 = 'data:image/svg+xml;base64,' + svg64;
-
-                    const img = new Image();
-                    img.onload = () => {
-                        // White square for QR
-                        ctx.fillStyle = '#ffffff';
-                        ctx.fillRect(canvas.width / 2 - 160, 160, 320, 320);
-                        ctx.drawImage(img, canvas.width / 2 - 150, 170, 300, 300);
-
-                        // Info
-                        ctx.textAlign = 'left';
-                        ctx.fillStyle = '#ffffff';
-                        ctx.font = 'bold 32px Arial';
-                        ctx.fillText(`Student: ${user.name}`, 60, 540);
-
-                        ctx.font = 'bold 32px Arial';
-                        ctx.fillStyle = '#f97316'; // orange-500
-                        ctx.fillText(`Meal: ${mealDisplay}`, 60, 590);
-
-                        ctx.fillStyle = '#fde047'; // yellow-300
-                        ctx.font = '24px Arial';
-                        let sideDishesText = coupon.sideDishes?.length > 0 ? coupon.sideDishes.join(', ') : 'No Sides';
-                        if (sideDishesText.length > 40) sideDishesText = sideDishesText.substring(0, 37) + '...';
-                        ctx.fillText(`Sides: ${sideDishesText}`, 60, 640);
-
-                        ctx.fillStyle = '#ffffff';
-                        ctx.font = '28px Arial';
-                        ctx.fillText(`Date: ${validDate.toLocaleDateString()}`, 60, 690);
-                        ctx.fillText(`Code: ${coupon.code}`, 60, 740);
-
-                        ctx.fillStyle = '#94a3b8';
-                        ctx.font = '24px Arial';
-                        ctx.fillText(`Valid until 3:00 PM`, 60, 790);
-
-                        // Branding footer
-                        ctx.fillStyle = '#1e293b';
-                        ctx.fillRect(0, 840, 600, 60);
-                        ctx.fillStyle = '#ffffff';
-                        ctx.font = 'bold 24px Arial';
-                        ctx.textAlign = 'center';
-                        ctx.fillText('N M S M GOVT COLLEGE KALPETTA', canvas.width / 2, 880);
-
-                        const link = document.createElement('a');
-                        link.download = `Coupon_${coupon.code}.jpg`;
-                        link.href = canvas.toDataURL('image/jpeg', 0.9);
-                        link.click();
-                    };
-                    img.src = image64;
-                }
+                const win = window.open('', '_blank');
+                if (win) { win.document.write(printHtml); win.document.close(); }
             };
 
             return (
@@ -484,7 +459,7 @@ export default function StudentDashboard({ user }: { user: any }) {
                         className="mt-6 w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg flex items-center justify-center gap-2 transition-all border border-indigo-400/50"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" x2="12" y1="3" y2="15" /></svg>
-                        Download Coupon (JPEG)
+                        Save / Print Coupon
                     </button>
                 </div>
             );
