@@ -78,13 +78,19 @@ export async function POST(req: NextRequest) {
         if (cleanPhone.length > 10) cleanPhone = cleanPhone.slice(-10);
         if (cleanPhone.length !== 10) cleanPhone = '9999999999';
 
+        // Cashfree rejects names with parentheses or special characters — strip them
+        const cleanName = (user.name || 'Student')
+            .replace(/[^a-zA-Z\s]/g, '')  // remove anything that's not a letter or space
+            .replace(/\s+/g, ' ')          // collapse multiple spaces
+            .trim() || 'Student';
+
         console.log('[CASHFREE_QR_CREATE] Creating payment link for:', user.email);
 
         const { linkId: createdLinkId, linkUrl } = await createPaymentLink({
             linkId,
             amount: 10,
             purpose: 'DigiPlate Meal Coupon – ₹10',
-            customerName: user.name || 'Student',
+            customerName: cleanName,
             customerEmail: user.email || '',
             customerPhone: cleanPhone,
             expiryTime,
