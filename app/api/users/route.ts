@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectToDatabase from '@/lib/db';
 import User from '@/models/User';
 import { hashPassword, generateRandomPassword } from '@/lib/password';
-import { sendWhatsApp, sendEmail } from '@/lib/notify';
+import { sendEmail } from '@/lib/notify';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 
@@ -41,7 +41,6 @@ export async function POST(req: NextRequest) {
         });
 
         const credentialMsg = `Welcome to DigiPlate! Your login: Email: ${email}, Password: ${rawPassword}`;
-        await sendWhatsApp(phone, credentialMsg);
         await sendEmail(email, 'Your DigiPlate Account Credentials', credentialMsg);
 
         return NextResponse.json({ message: 'User created successfully', user: newUser }, { status: 201 });

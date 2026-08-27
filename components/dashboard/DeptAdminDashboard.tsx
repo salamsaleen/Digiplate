@@ -205,7 +205,7 @@ export default function DeptAdminDashboard({ user }: { user: any }) {
                             <input type="text" placeholder="Full Name" className="glass-input" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required />
                             <input type="email" placeholder="Email" className="glass-input" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} required />
                             <input type="tel" placeholder="Phone" className="glass-input" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} required />
-                            <button className="glass-button w-full bg-green-600 hover:bg-green-500 font-bold">Register Student & Send WhatsApp</button>
+                            <button className="glass-button w-full bg-blue-600 hover:bg-blue-500 font-bold">Register Student & Send Email</button>
                         </form>
                     </div>
                 </div>
