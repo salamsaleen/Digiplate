@@ -32,6 +32,10 @@
             "schedule": "35 9 * * *"
         },
         {
+            "path": "/api/cron/reminders?type=polling_closing",
+            "schedule": "25 14 * * *"
+        },
+        {
             "path": "/api/cron/reminders?type=test_open",
             "schedule": "0 10 * * *"
         }

@@ -30,6 +30,32 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ message: `Test polling reminder sent to ${count} students.` });
         }
 
+        if (type === 'polling_closing') {
+            // 7:55 PM: Send ONLY to students who haven't polled
+            const lunchDate = getNextLunchDate();
+            const start = new Date(lunchDate); start.setHours(0, 0, 0, 0);
+            const end = new Date(lunchDate); end.setHours(23, 59, 59, 999);
+
+            // Find students who ALREADY polled
+            const polledCoupons = await Coupon.find({
+                validForDate: { $gte: start, $lt: end }
+            });
+            const polledStudentIds = polledCoupons.map(c => c.studentId.toString());
+
+            // Find all students
+            const allStudents = await User.find({ role: 'student' });
+            
+            // Filter to only those who haven't polled
+            const unpolledStudents = allStudents.filter(student => !polledStudentIds.includes(student._id.toString()));
+
+            const pushPromises = unpolledStudents.map(student => 
+                sendPushNotification(student._id.toString(), '⚠️ Hurry Up!', 'You are not polled yet. Polling time closing within 5 minutes.')
+            );
+            
+            await Promise.allSettled(pushPromises);
+            return NextResponse.json({ message: `Last chance polling reminder sent to ${unpolledStudents.length} unpolled students.` });
+        }
+
         if (type === 'open') {
             // 3:00 PM: Send to all students
             const students = await User.find({ role: 'student' });
