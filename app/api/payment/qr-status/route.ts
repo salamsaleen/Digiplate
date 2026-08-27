@@ -6,7 +6,7 @@ import connectToDatabase from '@/lib/db';
 import Coupon from '@/models/Coupon';
 import SystemSettings from '@/models/SystemSettings';
 import User from '@/models/User';
-import { sendWhatsApp } from '@/lib/notify';
+import { sendPushNotification } from '@/lib/notify';
 import { getNextLunchDate, getTodayLunchDate } from '@/lib/time';
 import { fetchPaymentLink } from '@/lib/cashfree';
 
@@ -95,9 +95,8 @@ export async function GET(req: NextRequest) {
 
         // Send WhatsApp Notification
         const student = await User.findById(user.id);
-        if (student && student.phone) {
-            const dateStr = new Date(lunchDate).toLocaleDateString();
-            await sendWhatsApp(student.phone, `Success! 💳 Your UPI payment of ₹10 is verified. Coupon ${coupon.code} for ${mealType} on ${dateStr} is now ACTIVE! 🍽️`);
+        if (student) {
+            await sendPushNotification(student._id.toString(), '🎉 Coupon generated successfully!', 'Your meal is confirmed.');
         }
 
         return NextResponse.json({ paid: true, coupon });

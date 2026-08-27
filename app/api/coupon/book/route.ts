@@ -7,7 +7,7 @@ import Coupon from '@/models/Coupon';
 import SystemSettings from '@/models/SystemSettings';
 import User from '@/models/User';
 import { isBookingOpen, isPaymentOpen, getNextLunchDate, getTodayLunchDate } from '@/lib/time';
-import { sendWhatsApp } from '@/lib/notify';
+import { sendPushNotification } from '@/lib/notify';
 
 export async function POST(req: NextRequest) {
     try {
@@ -60,10 +60,7 @@ export async function POST(req: NextRequest) {
             });
 
             const user = await User.findById(studentId);
-            if (user?.phone) {
-                const dateStr = new Date(lunchDate).toLocaleDateString('en-IN');
-                await sendWhatsApp(user.phone, `✋ Hi ${user.name}, your poll for ${mealType} on ${dateStr} is recorded! Pay ₹10 before 10:00 AM tomorrow to confirm your meal. 🍽️`);
-            }
+                await sendPushNotification(user._id.toString(), '✅ Polled successfully!', 'Please pay between 6:00 AM and 10:00 AM tomorrow to confirm.');
 
             return NextResponse.json({ message: 'Polled! Pay before 10:00 AM tomorrow to confirm.', coupon: newCoupon }, { status: 201 });
         }
@@ -124,9 +121,8 @@ export async function POST(req: NextRequest) {
                 });
             }
 
-            if (user?.phone) {
-                const dateStr = new Date(lunchDate).toLocaleDateString('en-IN');
-                await sendWhatsApp(user.phone, `🎉 Coupon confirmed! ${coupon.code} for ${mealType} on ${dateStr} is ACTIVE. 🍽️`);
+            if (user) {
+                await sendPushNotification(user._id.toString(), '🎉 Coupon generated successfully!', 'Your meal is confirmed.');
             }
 
             return NextResponse.json({ message: 'Payment Successful! Coupon Active.', coupon }, { status: 201 });
@@ -165,9 +161,8 @@ export async function POST(req: NextRequest) {
             existing.amountPaid = 10; // fix: ensure revenue is recorded correctly
             await existing.save();
 
-            if (user?.phone) {
-                const dateStr = new Date(existing.validForDate).toLocaleDateString('en-IN');
-                await sendWhatsApp(user.phone, `✅ Payment verified! Coupon ${existing.code} for ${existing.mealType} on ${dateStr} is now ACTIVE! 🍽️`);
+            if (user) {
+                await sendPushNotification(user._id.toString(), '🎉 Coupon generated successfully!', 'Your meal is confirmed.');
             }
 
             return NextResponse.json({ message: 'Payment Successful! Coupon Active.', coupon: existing });

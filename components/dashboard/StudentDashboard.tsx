@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
+import PushManager from '@/components/PushManager';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import QRCode from 'react-qr-code';
@@ -571,6 +572,7 @@ export default function StudentDashboard({ user }: { user: any }) {
                     </div>
                 </div>
             )}
+            <PushManager />
         </div>
     );
 }

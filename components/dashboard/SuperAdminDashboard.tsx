@@ -277,32 +277,7 @@ export default function SuperAdminDashboard({ user }: { user: any }) {
 
             {/* Top-right action buttons — stacks safely on mobile */}
             <div className="absolute top-4 right-4 z-50 flex items-center gap-2" ref={menuRef}>
-                {/* Send Reminders */}
-                <button
-                    onClick={async () => {
-                        if (!confirm('Send polling reminders to all pending students via WhatsApp?')) return;
-                        setMessage('Sending reminders...');
-                        try {
-                            const res = await fetch('/api/admin/notify-polls', { method: 'POST' });
-                            let data;
-                            try {
-                                data = await res.json();
-                            } catch (e) {
-                                data = { message: 'Failed to parse server response' };
-                            }
-                            if (res.ok) {
-                                setMessage(`✅ ${data.message}`);
-                                setTimeout(() => setMessage(''), 5000);
-                            } else {
-                                setMessage(`❌ Error: ${data.message}`);
-                            }
-                        } catch (err) { setMessage('❌ Network error'); }
-                    }}
-                    className="hidden sm:flex items-center gap-2 px-3 py-2 bg-indigo-600/80 backdrop-blur-md rounded-full border border-indigo-400/50 hover:bg-indigo-500 text-white transition-all shadow-lg text-xs font-bold"
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m22 2-7 20-4-9-9-4Z" /><path d="M22 2 11 13" /></svg>
-                    Reminders
-                </button>
+
                 {/* Report Download Menu */}
                 <button
                     onClick={() => setShowMenu(!showMenu)}

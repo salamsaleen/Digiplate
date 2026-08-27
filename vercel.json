@@ -5,5 +5,15 @@
         "app/api/**": {
             "maxDuration": 30
         }
-    }
+    },
+    "crons": [
+        {
+            "path": "/api/cron/reminders?type=open",
+            "schedule": "30 9 * * *"
+        },
+        {
+            "path": "/api/cron/reminders?type=pay",
+            "schedule": "30 0 * * *"
+        }
+    ]
 }
