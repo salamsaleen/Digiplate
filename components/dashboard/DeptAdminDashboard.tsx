@@ -118,20 +118,20 @@ export default function DeptAdminDashboard({ user }: { user: any }) {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <button
                             onClick={() => setView('register')}
-                            className="w-full py-6 bg-[#064e3b] hover:bg-[#065f46] text-white font-bold rounded-2xl shadow-2xl transition-all transform hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-4 text-2xl border border-green-400/20"
+                            className="w-full py-4 bg-[#064e3b] hover:bg-[#065f46] text-white font-bold rounded-2xl shadow-xl transition-all transform hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-3 text-lg md:text-xl border border-green-400/20"
                         >
-                            <div className="bg-green-400/20 p-3 rounded-xl border border-green-400/30">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
+                            <div className="bg-green-400/20 p-2 rounded-xl border border-green-400/30">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
                             </div>
                             <span>Register Student</span>
                         </button>
 
                         <button
                             onClick={() => setView('students')}
-                            className="w-full py-6 bg-yellow-600 hover:bg-yellow-700 text-white font-bold rounded-2xl shadow-2xl transition-all transform hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-4 text-2xl border border-yellow-400/20"
+                            className="w-full py-4 bg-yellow-600 hover:bg-yellow-700 text-white font-bold rounded-2xl shadow-xl transition-all transform hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-3 text-lg md:text-xl border border-yellow-400/20"
                         >
-                            <div className="bg-yellow-400/20 p-3 rounded-xl border border-yellow-400/30">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M9 22H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v8" /><path d="M15 2h2" /><path d="M15 11h2" /><path d="M15 8h2" /></svg>
+                            <div className="bg-yellow-400/20 p-2 rounded-xl border border-yellow-400/30">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M9 22H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v8" /><path d="M15 2h2" /><path d="M15 11h2" /><path d="M15 8h2" /></svg>
                             </div>
                             <span>View Students</span>
                         </button>

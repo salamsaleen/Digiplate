@@ -415,10 +415,10 @@ export default function CanteenDashboard({ user }: { user: any }) {
 
                     <button
                         onClick={() => setView('validate')}
-                        className="w-full py-6 bg-[#064e3b] hover:bg-[#065f46] text-white font-bold rounded-2xl shadow-2xl transition-all transform hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-4 text-2xl border border-green-400/20"
+                        className="w-full py-4 bg-[#064e3b] hover:bg-[#065f46] text-white font-bold rounded-2xl shadow-xl transition-all transform hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-3 text-lg md:text-xl border border-green-400/20"
                     >
-                        <div className="bg-green-400/20 p-3 rounded-xl border border-green-400/30">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2" /><path d="M17 3h2a2 2 0 0 1 2 2v2" /><path d="M21 17v2a2 2 0 0 1-2 2h-2" /><path d="M3 17v2a2 2 0 0 1 2 2h2" /><path d="M8 12h8" /><path d="M12 8v8" /></svg>
+                        <div className="bg-green-400/20 p-2 rounded-xl border border-green-400/30">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2" /><path d="M17 3h2a2 2 0 0 1 2 2v2" /><path d="M21 17v2a2 2 0 0 1-2 2h-2" /><path d="M3 17v2a2 2 0 0 1 2 2h2" /><path d="M8 12h8" /><path d="M12 8v8" /></svg>
                         </div>
                         <span>Validate Coupon</span>
                     </button>
