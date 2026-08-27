@@ -33,12 +33,15 @@ export async function GET(req: NextRequest) {
         if (type === 'open') {
             // 3:00 PM: Send to all students
             const students = await User.find({ role: 'student' });
-            let count = 0;
-            for (const student of students) {
-                await sendPushNotification(student._id.toString(), '🔔 Polling is now OPEN!', 'Book your meal for tomorrow.');
-                count++;
-            }
-            return NextResponse.json({ message: `Polling opened reminder sent to ${count} students.` });
+            
+            // Run notifications in parallel to prevent Vercel 10-second timeout
+            const pushPromises = students.map(student => 
+                sendPushNotification(student._id.toString(), '🔔 Polling is now OPEN!', 'Book your meal for tomorrow.')
+            );
+            
+            await Promise.allSettled(pushPromises);
+            
+            return NextResponse.json({ message: `Polling opened reminder sent to ${students.length} students.` });
         }
 
         if (type === 'pay') {
