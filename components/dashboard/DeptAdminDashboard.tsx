@@ -138,9 +138,14 @@ export default function DeptAdminDashboard({ user }: { user: any }) {
                     </div>
 
                     <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                        <div className="glass-panel p-6 border-l-4 border-purple-500">
-                            <h2 className="text-xl font-semibold mb-4 text-purple-400">All Polled Students ({filteredPolls.length})</h2>
-                            <div className="max-h-60 overflow-y-auto space-y-2 pr-2">
+                        <details className="glass-panel p-6 border-l-4 border-purple-500 group">
+                            <summary className="text-xl font-semibold text-purple-400 cursor-pointer list-none flex justify-between items-center outline-none">
+                                <span>All Polled Students ({filteredPolls.length})</span>
+                                <span className="transition group-open:rotate-180">
+                                    <svg fill="none" height="24" shapeRendering="geometricPrecision" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" viewBox="0 0 24 24" width="24"><path d="M6 9l6 6 6-6"></path></svg>
+                                </span>
+                            </summary>
+                            <div className="max-h-60 overflow-y-auto space-y-2 pr-2 mt-4 pt-4 border-t border-purple-500/20">
                                 {filteredPolls.map((p: any) => (
                                     <div key={p._id} className="p-3 bg-purple-900/30 rounded flex justify-between items-center border border-purple-500/30">
                                         <div>
@@ -153,11 +158,16 @@ export default function DeptAdminDashboard({ user }: { user: any }) {
                                     </div>
                                 ))}
                             </div>
-                        </div>
+                        </details>
 
-                        <div className="glass-panel p-6 border-l-4 border-green-500">
-                            <h2 className="text-xl font-semibold mb-4 text-green-400">Poll & Pay (Confirmed) ({filteredApproved.length})</h2>
-                            <div className="max-h-60 overflow-y-auto space-y-2 pr-2">
+                        <details className="glass-panel p-6 border-l-4 border-green-500 group">
+                            <summary className="text-xl font-semibold text-green-400 cursor-pointer list-none flex justify-between items-center outline-none">
+                                <span>Poll & Pay (Confirmed) ({filteredApproved.length})</span>
+                                <span className="transition group-open:rotate-180">
+                                    <svg fill="none" height="24" shapeRendering="geometricPrecision" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" viewBox="0 0 24 24" width="24"><path d="M6 9l6 6 6-6"></path></svg>
+                                </span>
+                            </summary>
+                            <div className="max-h-60 overflow-y-auto space-y-2 pr-2 mt-4 pt-4 border-t border-green-500/20">
                                 {filteredApproved.map((c: any) => (
                                     <div key={c._id} className="p-3 bg-green-900/30 rounded flex justify-between items-center border border-green-500/30">
                                         <div>
@@ -168,7 +178,7 @@ export default function DeptAdminDashboard({ user }: { user: any }) {
                                     </div>
                                 ))}
                             </div>
-                        </div>
+                        </details>
                     </div>
 
                 </div>

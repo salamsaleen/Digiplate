@@ -344,9 +344,14 @@ export default function SuperAdminDashboard({ user }: { user: any }) {
 
 
 
-                    <div className="glass-panel p-6 h-fit bg-gradient-to-br from-indigo-900/40 to-purple-900/40">
-                        <h2 className="text-xl font-semibold mb-6 text-white border-b border-white/10 pb-2">Platform Stats (Live)</h2>
-                        <div className="space-y-6">
+                    <details className="glass-panel p-6 h-fit bg-gradient-to-br from-indigo-900/40 to-purple-900/40 group">
+                        <summary className="text-xl font-semibold text-white cursor-pointer list-none flex justify-between items-center outline-none">
+                            <span>Platform Stats (Live)</span>
+                            <span className="transition group-open:rotate-180">
+                                <svg fill="none" height="24" shapeRendering="geometricPrecision" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" viewBox="0 0 24 24" width="24"><path d="M6 9l6 6 6-6"></path></svg>
+                            </span>
+                        </summary>
+                        <div className="space-y-6 mt-6 pt-4 border-t border-white/10">
                             <div className="flex justify-between items-center pb-2">
                                 <span className="text-gray-300">Total Students Registered</span>
                                 <span className="font-bold text-3xl text-fuchsia-400">{stats.totalStudents}</span>
@@ -374,7 +379,7 @@ export default function SuperAdminDashboard({ user }: { user: any }) {
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </details>
                 </div>
             ) : view === 'register' ? (
                 <div className="max-w-2xl mx-auto animate-fade-in">
