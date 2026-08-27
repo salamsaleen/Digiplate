@@ -551,58 +551,33 @@ export default function StudentDashboard({ user }: { user: any }) {
                         <div className="text-center mb-4">
                             <p className="text-gray-400 text-xs uppercase tracking-widest mb-1">Secure UPI Payment</p>
                             <h3 className="text-2xl font-bold text-white">Pay ₹10</h3>
-                            <p className="text-gray-400 text-sm mt-1">Scan the QR code or tap an app below</p>
+                            <p className="text-gray-400 text-sm mt-1">Scan the QR code with any UPI app</p>
                         </div>
 
                         {/* QR Code — encodes Cashfree payment link URL */}
-                        <div className="flex justify-center mb-4">
+                        <div className="flex justify-center mb-5">
                             {linkUrl ? (
                                 <div className="bg-white p-3 rounded-xl shadow-lg border-4 border-white">
-                                    <QRCode value={linkUrl} size={200} />
+                                    <QRCode value={linkUrl} size={220} />
                                 </div>
                             ) : (
-                                <div className="w-[228px] h-[228px] bg-white/10 rounded-xl flex items-center justify-center">
+                                <div className="w-[252px] h-[252px] bg-white/10 rounded-xl flex items-center justify-center">
                                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400"></div>
                                 </div>
                             )}
                         </div>
 
-                        <div className="flex items-center gap-3 mb-4">
-                            <div className="flex-1 h-px bg-white/10"></div>
-                            <p className="text-gray-500 text-xs">OR tap to open app</p>
-                            <div className="flex-1 h-px bg-white/10"></div>
-                        </div>
-
-                        {/* UPI App Icons — clicking opens Cashfree payment page */}
-                        <div className="grid grid-cols-3 gap-3 mb-5">
-                            {[
-                                { name: 'PhonePe', icon: '/upi-icons/phonepe.svg', bg: '#5f259f' },
-                                { name: 'Google Pay', icon: '/upi-icons/googlepay.svg', bg: '#ffffff' },
-                                { name: 'Paytm', icon: '/upi-icons/paytm.svg', bg: '#ffffff' },
-                                { name: 'FamPay', icon: '/upi-icons/fampay.svg', bg: '#FFD700' },
-                                { name: 'Navi', icon: '/upi-icons/navi.svg', bg: '#1B1F3B' },
-                                { name: 'BHIM UPI', icon: '/upi-icons/bhim.svg', bg: '#FF6B00' },
-                            ].map((app) => (
-                                <button
-                                    key={app.name}
-                                    onClick={() => linkUrl && (window.location.href = linkUrl)}
-                                    className="flex flex-col items-center gap-1.5 p-2 rounded-xl hover:bg-white/10 transition-all active:scale-90"
-                                >
-                                    <div
-                                        className="w-14 h-14 rounded-2xl overflow-hidden shadow-lg flex items-center justify-center border border-white/10"
-                                        style={{ backgroundColor: app.bg }}
-                                    >
-                                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                                        <img
-                                            src={app.icon}
-                                            alt={app.name}
-                                            className="w-full h-full object-cover"
-                                        />
-                                    </div>
-                                    <span className="text-white/80 text-[10px] font-medium leading-tight text-center">{app.name}</span>
-                                </button>
-                            ))}
-                        </div>
+                        {/* Open Payment Page button */}
+                        {linkUrl && (
+                            <a
+                                href={linkUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center justify-center gap-2 w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl mb-4 transition-colors border border-blue-400/50"
+                            >
+                                📱 Open Payment Page
+                            </a>
+                        )}
 
                         {/* Waiting Indicator */}
                         <div className="flex items-center justify-center gap-2 bg-blue-950/40 border border-blue-500/20 rounded-xl py-3 mb-4">
