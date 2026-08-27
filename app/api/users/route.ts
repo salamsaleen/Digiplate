@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
         const credentialMsg = `Welcome to DigiPlate! Your login: Email: ${email}, Password: ${rawPassword}`;
         await sendEmail(email, 'Your DigiPlate Account Credentials', credentialMsg);
 
-        return NextResponse.json({ message: 'User created successfully', user: newUser }, { status: 201 });
+        return NextResponse.json({ message: 'User created successfully', user: newUser, password: rawPassword }, { status: 201 });
     } catch (error: any) {
         return NextResponse.json({ message: error.message || 'Internal Server Error' }, { status: 500 });
     }

@@ -72,7 +72,7 @@ export default function DeptAdminDashboard({ user }: { user: any }) {
             });
             const data = await res.json();
             if (res.ok) {
-                setMessage(`SUCCESS: User created! Password sent to ${formData.email}`);
+                setMessage(`SUCCESS: User created! Password: ${data.password} (Also sent to ${formData.email})`);
                 setFormData({ name: '', email: '', phone: '', role: 'student', program: 'ug' });
                 fetchStudents();
             } else { setMessage(`ERROR: ${data.message}`); }
