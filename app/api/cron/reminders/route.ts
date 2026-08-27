@@ -15,6 +15,20 @@ export async function GET(req: NextRequest) {
         const type = req.nextUrl.searchParams.get('type');
         await connectToDatabase();
 
+        if (type === 'test_open') {
+            // 3:30 PM Test (Runs once on Aug 27, 2026)
+            if (!new Date().toISOString().startsWith('2026-08-27')) {
+                return NextResponse.json({ message: 'Skipped - not the target date.' });
+            }
+            const students = await User.find({ role: 'student' });
+            let count = 0;
+            for (const student of students) {
+                await sendPushNotification(student._id.toString(), '🔔 Test: Polling is OPEN!', 'This is a test notification requested at 3:30 PM.');
+                count++;
+            }
+            return NextResponse.json({ message: `Test polling reminder sent to ${count} students.` });
+        }
+
         if (type === 'open') {
             // 3:00 PM: Send to all students
             const students = await User.find({ role: 'student' });
