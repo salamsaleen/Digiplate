@@ -44,6 +44,7 @@ export default function PushManager() {
         // If we want to be robust, we could always silently sync subscription if granted.
         if (Notification.permission === "granted") {
             subscribeUser(true);
+        }
     }, []);
 
     const subscribeUser = async (silent = false) => {
