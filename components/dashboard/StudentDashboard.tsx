@@ -248,6 +248,8 @@ export default function StudentDashboard({ user }: { user: any }) {
         setLinkId('');
     };
 
+    const isTester = user?.email?.toLowerCase() === 'teststudent@digiplate.com';
+
     const renderActionArea = () => {
         if (!settingsLoaded) return <p className="text-white text-center">Loading Canteen Status...</p>;
 
@@ -267,10 +269,11 @@ export default function StudentDashboard({ user }: { user: any }) {
             const isPolled = coupon?.status === 'polled';
 
             // Determine current IST hour to show correct state
+            // teststudent bypasses all time gates — can act at any hour
             const istHour = new Date(Date.now() + 5.5 * 60 * 60 * 1000).getUTCHours();
-            const isMorningWindow = istHour >= 6 && istHour < 10;   // 6–10 AM: pay for today
-            const isPaymentExpired = istHour >= 10 && isPolled;       // Past 10 AM: poll deleted
-            const isPollingHours = istHour >= 15 && istHour < 20;    // 3–8 PM: poll or pay
+            const isMorningWindow = isTester || (istHour >= 6 && istHour < 10);   // 6–10 AM: pay for today
+            const isPaymentExpired = !isTester && (istHour >= 10 && isPolled);     // Past 10 AM: poll deleted
+            const isPollingHours = isTester || (istHour >= 15 && istHour < 20);   // 3–8 PM: poll or pay
 
             // State: Polled, but payment window has expired (10 AM passed without paying)
             if (isPaymentExpired) {
