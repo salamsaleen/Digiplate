@@ -73,10 +73,11 @@ export async function POST(req: NextRequest) {
         // Unique link ID
         const linkId = `digiplate-${user.id}-${Date.now()}`;
 
-        // Cashfree requires a strict 10-digit phone
+        // Cashfree requires a valid 10-digit Indian mobile number (starts with 6–9)
         let cleanPhone = (user.phone || '').replace(/\D/g, '');
         if (cleanPhone.length > 10) cleanPhone = cleanPhone.slice(-10);
-        if (cleanPhone.length !== 10) cleanPhone = '9999999999';
+        const isValidIndianMobile = cleanPhone.length === 10 && /^[6-9]/.test(cleanPhone);
+        if (!isValidIndianMobile) cleanPhone = '9876543210'; // safe test fallback
 
         // Cashfree rejects names with parentheses or special characters — strip them
         const cleanName = (user.name || 'Student')
