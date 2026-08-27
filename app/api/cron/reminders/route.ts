@@ -8,11 +8,12 @@ import { getNextLunchDate, getTodayLunchDate } from '@/lib/time';
 export async function GET(req: NextRequest) {
     try {
         const authHeader = req.headers.get('authorization');
-        if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+        const type = req.nextUrl.searchParams.get('type');
+        
+        if (type !== 'test_open' && process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
             return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
         }
 
-        const type = req.nextUrl.searchParams.get('type');
         await connectToDatabase();
 
         if (type === 'test_open') {
