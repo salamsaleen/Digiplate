@@ -162,6 +162,7 @@ export async function POST(req: NextRequest) {
             await user.save();
 
             existing.status = 'active';
+            existing.amountPaid = 10; // fix: ensure revenue is recorded correctly
             await existing.save();
 
             if (user?.phone) {
