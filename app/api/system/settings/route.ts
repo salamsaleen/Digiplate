@@ -72,6 +72,18 @@ export async function POST(req: NextRequest) {
         let sourceDate = new Date(date);
         const normalizedDate = new Date(Date.UTC(sourceDate.getFullYear(), sourceDate.getMonth(), sourceDate.getDate(), 0, 0, 0, 0));
 
+        // Time Limit: If updating tomorrow's settings, block if IST time > 15:00 (3:00 PM)
+        const nowIST = getISTDate();
+        const tomorrowIST = getISTDate(); tomorrowIST.setDate(tomorrowIST.getDate() + 1);
+        
+        const isTomorrow = sourceDate.getFullYear() === tomorrowIST.getFullYear() &&
+                           sourceDate.getMonth() === tomorrowIST.getMonth() &&
+                           sourceDate.getDate() === tomorrowIST.getDate();
+
+        if (isTomorrow && nowIST.getHours() >= 15) {
+            return NextResponse.json({ message: 'Menu modifications for tomorrow are locked after 3:00 PM.' }, { status: 403 });
+        }
+
         const settings = await SystemSettings.findOneAndUpdate(
             { date: normalizedDate },
             {

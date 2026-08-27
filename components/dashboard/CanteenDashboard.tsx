@@ -324,14 +324,26 @@ export default function CanteenDashboard({ user }: { user: any }) {
                                 <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Canteen Controls</span>
                             </div>
                             <button
-                                onClick={() => { setShowMealModal(true); setShowMenu(false); }}
-                                className="block w-full text-left px-4 py-3 text-sm text-gray-200 hover:bg-white/10 transition-colors border-b border-gray-700/50"
+                                onClick={() => {
+                                    if (new Date().getHours() >= 15) {
+                                        alert("Menu modifications for tomorrow are locked after 3:00 PM. Polling has already started.");
+                                        return;
+                                    }
+                                    setShowMealModal(true); setShowMenu(false);
+                                }}
+                                className={`block w-full text-left px-4 py-3 text-sm transition-colors border-b border-gray-700/50 ${new Date().getHours() >= 15 ? 'text-gray-500 cursor-not-allowed line-through' : 'text-gray-200 hover:bg-white/10'}`}
                             >
                                 <span className="mr-2">🍽️</span> Set Tomorrow's Meal
                             </button>
                             <button
-                                onClick={() => { setShowStatusModal(true); setShowMenu(false); }}
-                                className="block w-full text-left px-4 py-3 text-sm text-gray-200 hover:bg-white/10 transition-colors border-b border-gray-700/50"
+                                onClick={() => {
+                                    if (new Date().getHours() >= 15) {
+                                        alert("Menu modifications for tomorrow are locked after 3:00 PM. Polling has already started.");
+                                        return;
+                                    }
+                                    setShowStatusModal(true); setShowMenu(false);
+                                }}
+                                className={`block w-full text-left px-4 py-3 text-sm transition-colors border-b border-gray-700/50 ${new Date().getHours() >= 15 ? 'text-gray-500 cursor-not-allowed line-through' : 'text-gray-200 hover:bg-white/10'}`}
                             >
                                 <span className="mr-2">{settings.isOpen ? '🔒' : '🔓'}</span>
                                 {settings.isOpen ? 'Close Canteen (Tomorrow)' : 'Open Canteen (Tomorrow)'}

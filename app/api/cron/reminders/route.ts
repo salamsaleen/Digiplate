@@ -87,6 +87,31 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ message: `Canteen confirmed update sent: ${count}` });
         }
 
+        if (type === 'canteen_missed_deadline') {
+            // 3:05 PM: Check if they set tomorrow's menu. If not, notify them it's locked.
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            const normalizedDate = new Date(Date.UTC(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate(), 0, 0, 0, 0));
+            
+            // Need to import SystemSettings
+            const SystemSettings = (await import('@/models/SystemSettings')).default;
+            const settings = await SystemSettings.findOne({ date: normalizedDate });
+
+            if (!settings) {
+                // They didn't save any settings, so it defaulted.
+                const canteenStaff = await User.find({ role: 'canteen_staff' });
+                for (const staff of canteenStaff) {
+                    await sendPushNotification(
+                        staff._id.toString(), 
+                        '⚠️ Deadline Missed!', 
+                        'Tomorrow\'s menu was automatically locked as Default (Rice). Polling has started.'
+                    );
+                }
+                return NextResponse.json({ message: 'Missed deadline notification sent.' });
+            }
+            return NextResponse.json({ message: 'Menu was set. No missed deadline.' });
+        }
+
         return NextResponse.json({ message: 'Invalid cron type' }, { status: 400 });
 
     } catch (error: any) {

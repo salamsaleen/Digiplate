@@ -26,6 +26,10 @@
         {
             "path": "/api/cron/reminders?type=canteen_confirmed",
             "schedule": "45 4 * * *"
+        },
+        {
+            "path": "/api/cron/reminders?type=canteen_missed_deadline",
+            "schedule": "35 9 * * *"
         }
     ]
 }
