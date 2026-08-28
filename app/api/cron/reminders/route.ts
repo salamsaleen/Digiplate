@@ -3,7 +3,7 @@ import { sendPushNotification } from '@/lib/notify';
 import User from '@/models/User';
 import Coupon from '@/models/Coupon';
 import connectToDatabase from '@/lib/db';
-import { getNextLunchDate, getTodayLunchDate } from '@/lib/time';
+import { getNextLunchDate, getTodayLunchDate, getISTDate } from '@/lib/time';
 
 export async function GET(req: NextRequest) {
     try {
@@ -31,6 +31,12 @@ export async function GET(req: NextRequest) {
         }
 
         if (type === 'polling_closing') {
+            // Safeguard: Polling closes at 8:00 PM (20:00). 
+            // If cron fires late (at or after 8 PM), do not send notifications to avoid confusion.
+            if (getISTDate().getHours() >= 20) {
+                return NextResponse.json({ message: 'Skipped - Polling is already closed.' });
+            }
+
             // 7:55 PM: Send ONLY to students who haven't polled
             const lunchDate = getNextLunchDate();
             const start = new Date(lunchDate); start.setHours(0, 0, 0, 0);
