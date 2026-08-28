@@ -273,7 +273,7 @@ export default function StudentDashboard({ user }: { user: any }) {
             // teststudent bypasses all time gates — can act at any hour
             const istHour = new Date(Date.now() + 5.5 * 60 * 60 * 1000).getUTCHours();
             const isMorningWindow = isTester || (istHour >= 6 && istHour < 10);   // 6–10 AM: pay for today
-            const isPaymentExpired = !isTester && (istHour >= 10 && isPolled);     // Past 10 AM: poll deleted
+            const isPaymentExpired = !isTester && (istHour >= 10 && istHour < 15 && isPolled);     // Past 10 AM: poll deleted
             const isPollingHours = isTester || (istHour >= 15 && istHour < 20);   // 3–8 PM: poll or pay
 
             // State: Polled, but payment window has expired (10 AM passed without paying)
