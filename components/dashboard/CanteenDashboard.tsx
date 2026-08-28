@@ -12,7 +12,10 @@ export default function CanteenDashboard({ user }: { user: any }) {
     const [scannedCoupon, setScannedCoupon] = useState<any>(null); // Store fetched coupon details
     const [message, setMessage] = useState('');
     const [loading, setLoading] = useState(false);
-    const [stats, setStats] = useState({ polledCount: 0, redeemedCount: 0, paidCount: 0, revenue: 0 });
+    const [stats, setStats] = useState({
+        today: { date: '', polledCount: 0, redeemedCount: 0, paidCount: 0, revenue: 0 },
+        tomorrow: { date: '', polledCount: 0, redeemedCount: 0, paidCount: 0, revenue: 0 }
+    });
     const [showFinance, setShowFinance] = useState(false);
     const [showScanner, setShowScanner] = useState(false);
     const [view, setView] = useState<'home' | 'validate'>('home');
@@ -386,31 +389,65 @@ export default function CanteenDashboard({ user }: { user: any }) {
                 <div className="max-w-4xl mx-auto space-y-8 animate-fade-in">
                     {/* Stats Cards */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative">
-                        <div className="glass-panel p-6 text-center border border-orange-500/30 bg-orange-900/20">
-                            <p className="text-orange-300 font-semibold mb-2">Estimated Meals</p>
-                            <p className="text-4xl font-bold text-orange-400">{stats.polledCount}</p>
-                            <p className="text-xs text-orange-300/70 mt-2">Based on student polls</p>
-                        </div>
-                        <div className="glass-panel p-6 text-center border border-indigo-500/30 bg-indigo-900/20">
-                            <p className="text-indigo-300 font-semibold mb-2">Meals Served Today</p>
-                            <p className="text-4xl font-bold text-indigo-400">{stats.redeemedCount}</p>
-                            <p className="text-xs text-indigo-300/70 mt-2">Coupons redeemed</p>
+                        {/* TODAY'S MEAL CARD */}
+                        <div className="glass-panel p-6 border border-orange-500/30 bg-orange-900/20">
+                            <div className="flex justify-between items-center mb-4">
+                                <h3 className="text-lg font-bold text-orange-400">Today's Meal</h3>
+                                <span className="text-xs font-semibold text-orange-200/70 bg-orange-900/50 px-2 py-1 rounded-full border border-orange-500/20">
+                                    {stats.today.date ? new Date(stats.today.date).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' }) : '...'}
+                                </span>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="text-center bg-black/20 p-3 rounded-xl border border-white/5">
+                                    <p className="text-xs text-orange-300/70 mb-1">Estimated</p>
+                                    <p className="text-3xl font-bold text-orange-400">{stats.today.polledCount}</p>
+                                </div>
+                                <div className="text-center bg-black/20 p-3 rounded-xl border border-white/5">
+                                    <p className="text-xs text-indigo-300/70 mb-1">Served</p>
+                                    <p className="text-3xl font-bold text-indigo-400">{stats.today.redeemedCount}</p>
+                                </div>
+                                {showFinance && (
+                                    <>
+                                        <div className="text-center bg-cyan-900/20 p-3 rounded-xl border border-cyan-500/30">
+                                            <p className="text-xs text-cyan-300/70 mb-1">Pre-paid</p>
+                                            <p className="text-xl font-bold text-cyan-400">{stats.today.paidCount}</p>
+                                        </div>
+                                        <div className="text-center bg-rose-900/20 p-3 rounded-xl border border-rose-500/30">
+                                            <p className="text-xs text-rose-300/70 mb-1">Revenue</p>
+                                            <p className="text-xl font-bold text-rose-400">₹{stats.today.revenue}</p>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
                         </div>
 
-                        {showFinance && (
-                            <>
-                                <div className="glass-panel p-6 text-center border border-cyan-500/30 bg-cyan-900/20">
-                                    <p className="text-cyan-300 font-semibold mb-2">Pre-paid Meals</p>
-                                    <p className="text-4xl font-bold text-cyan-400">{stats.paidCount || 0}</p>
-                                    <p className="text-xs text-cyan-300/70 mt-2">Active + Redeemed</p>
+                        {/* TOMORROW'S MEAL CARD */}
+                        <div className="glass-panel p-6 border border-indigo-500/30 bg-indigo-900/20 flex flex-col">
+                            <div className="flex justify-between items-center mb-4">
+                                <h3 className="text-lg font-bold text-indigo-400">Tomorrow's Meal</h3>
+                                <span className="text-xs font-semibold text-indigo-200/70 bg-indigo-900/50 px-2 py-1 rounded-full border border-indigo-500/20">
+                                    {stats.tomorrow.date ? new Date(stats.tomorrow.date).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' }) : '...'}
+                                </span>
+                            </div>
+                            <div className="grid grid-cols-1 gap-4 flex-grow">
+                                <div className="text-center bg-black/20 p-3 rounded-xl border border-white/5 flex flex-col justify-center min-h-[76px]">
+                                    <p className="text-xs text-indigo-300/70 mb-1">Estimated Polls</p>
+                                    <p className="text-3xl font-bold text-indigo-400">{stats.tomorrow.polledCount}</p>
                                 </div>
-                                <div className="glass-panel p-6 text-center border border-rose-500/30 bg-rose-900/20">
-                                    <p className="text-rose-300 font-semibold mb-2">Total Revenue (₹)</p>
-                                    <p className="text-4xl font-bold text-rose-400">₹{stats.revenue || 0}</p>
-                                    <p className="text-xs text-rose-300/70 mt-2">Today's Collection</p>
+                            </div>
+                            {showFinance && (
+                                <div className="grid grid-cols-2 gap-4 mt-4">
+                                    <div className="text-center bg-cyan-900/20 p-3 rounded-xl border border-cyan-500/30">
+                                        <p className="text-xs text-cyan-300/70 mb-1">Pre-paid</p>
+                                        <p className="text-xl font-bold text-cyan-400">{stats.tomorrow.paidCount}</p>
+                                    </div>
+                                    <div className="text-center bg-rose-900/20 p-3 rounded-xl border border-rose-500/30">
+                                        <p className="text-xs text-rose-300/70 mb-1">Revenue</p>
+                                        <p className="text-xl font-bold text-rose-400">₹{stats.tomorrow.revenue}</p>
+                                    </div>
                                 </div>
-                            </>
-                        )}
+                            )}
+                        </div>
                     </div>
 
                     <button

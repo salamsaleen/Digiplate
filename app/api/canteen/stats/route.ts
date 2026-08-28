@@ -5,7 +5,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import connectToDatabase from '@/lib/db';
 import Coupon from '@/models/Coupon';
-import { getNextLunchDate } from '@/lib/time';
+import { getNextLunchDate, getTodayLunchDate } from '@/lib/time';
 
 export async function GET(req: NextRequest) {
     try {
@@ -15,57 +15,80 @@ export async function GET(req: NextRequest) {
         }
 
         await connectToDatabase();
-        const lunchDate = getNextLunchDate();
+        
+        const now = new Date();
+        const istOffset = 5.5 * 60 * 60 * 1000;
+        const istNow = new Date(now.getTime() + istOffset);
+        
+        const todayLunchDate = getTodayLunchDate();
+        const nextLunchDate = getNextLunchDate();
 
-        // Count Polls
-        const polledCount = await Coupon.countDocuments({
-            validForDate: {
-                $gte: new Date(new Date(lunchDate).setHours(0, 0, 0, 0)),
-                $lt: new Date(new Date(lunchDate).setHours(23, 59, 59, 999))
-            },
-            status: { $in: ['polled', 'requested', 'approved', 'active', 'redeemed'] } // All positive intentions
+        // Exact match bounds for validForDate to avoid cross-day timezone collisions
+        const todayStartUTC = new Date(todayLunchDate);
+        const todayEndUTC = new Date(todayLunchDate.getTime() + 24 * 60 * 60 * 1000);
+
+        const tomorrowStartUTC = new Date(nextLunchDate);
+        const tomorrowEndUTC = new Date(nextLunchDate.getTime() + 24 * 60 * 60 * 1000);
+
+        // -- TODAY STATS --
+        const todayPolledCount = await Coupon.countDocuments({
+            validForDate: { $gte: todayStartUTC, $lt: todayEndUTC },
+            status: { $in: ['polled', 'requested', 'approved', 'active', 'redeemed'] }
         });
 
-        // Count Redeemed
-        const redeemedCount = await Coupon.countDocuments({
-            redeemedAt: {
-                $gte: new Date(new Date().setHours(0, 0, 0, 0)), // Redeemed TODAY
-                $lt: new Date(new Date().setHours(23, 59, 59, 999))
-            },
+        // Redeemed count for TODAY in IST
+        const todayISTStartUTC = new Date(istNow);
+        todayISTStartUTC.setUTCHours(0, 0, 0, 0);
+        const todayISTStart = new Date(todayISTStartUTC.getTime() - istOffset);
+        
+        const todayISTEndUTC = new Date(istNow);
+        todayISTEndUTC.setUTCHours(23, 59, 59, 999);
+        const todayISTEnd = new Date(todayISTEndUTC.getTime() - istOffset);
+
+        const todayRedeemedCount = await Coupon.countDocuments({
+            redeemedAt: { $gte: todayISTStart, $lt: todayISTEnd },
             status: 'redeemed'
         });
 
-        // Count Paid Meals (Active + Redeemed today)
-        // Students who paid but haven't eaten yet (Active) + Students who ate (Redeemed)
-        // Note: 'Active' status coupons are valid for 'lunchDate' which is usually tomorrow/today depending on logic.
-        // For simplicity, we count 'Active' coupons valid for 'lunchDate'.
-
-        const activeCount = await Coupon.countDocuments({
-            validForDate: {
-                $gte: new Date(new Date(lunchDate).setHours(0, 0, 0, 0)),
-                $lt: new Date(new Date(lunchDate).setHours(23, 59, 59, 999))
-            },
-            status: 'active'
-        });
-
-        // Paid Count = Active (Available to eat) + Redeemed (Eaten)
-        // Note: redeemedCount above is checking 'redeemedAt' which is today. 
-        // We should probably check 'validForDate' for consistency if we want "Meals for this slot".
-        // But 'revenue' implies money collected. Money is collected when status becomes 'active'.
-        // So Revenue = (Active + Redeemed + Transferred + Expired) * 10
-        // Essentially any coupon for this date that isn't just 'polled' or 'requested'.
-
-        const paidCouponsCount = await Coupon.countDocuments({
-            validForDate: {
-                $gte: new Date(new Date(lunchDate).setHours(0, 0, 0, 0)),
-                $lt: new Date(new Date(lunchDate).setHours(23, 59, 59, 999))
-            },
+        const todayPaidCouponsCount = await Coupon.countDocuments({
+            validForDate: { $gte: todayStartUTC, $lt: todayEndUTC },
             status: { $in: ['active', 'redeemed', 'transferred', 'expired'] }
         });
+        const todayRevenue = todayPaidCouponsCount * 10;
 
-        const revenue = paidCouponsCount * 10;
+        // -- TOMORROW STATS --
+        const tomorrowPolledCount = await Coupon.countDocuments({
+            validForDate: { $gte: tomorrowStartUTC, $lt: tomorrowEndUTC },
+            status: { $in: ['polled', 'requested', 'approved', 'active', 'redeemed'] }
+        });
 
-        return NextResponse.json({ polledCount, redeemedCount, paidCount: paidCouponsCount, revenue });
+        const tomorrowRedeemedCount = await Coupon.countDocuments({
+            validForDate: { $gte: tomorrowStartUTC, $lt: tomorrowEndUTC },
+            status: 'redeemed'
+        });
+
+        const tomorrowPaidCouponsCount = await Coupon.countDocuments({
+            validForDate: { $gte: tomorrowStartUTC, $lt: tomorrowEndUTC },
+            status: { $in: ['active', 'redeemed', 'transferred', 'expired'] }
+        });
+        const tomorrowRevenue = tomorrowPaidCouponsCount * 10;
+
+        return NextResponse.json({
+            today: {
+                date: todayLunchDate,
+                polledCount: todayPolledCount,
+                redeemedCount: todayRedeemedCount,
+                paidCount: todayPaidCouponsCount,
+                revenue: todayRevenue
+            },
+            tomorrow: {
+                date: nextLunchDate,
+                polledCount: tomorrowPolledCount,
+                redeemedCount: tomorrowRedeemedCount,
+                paidCount: tomorrowPaidCouponsCount,
+                revenue: tomorrowRevenue
+            }
+        });
     } catch (error: any) {
         return NextResponse.json({ message: error.message || 'Server Error' }, { status: 500 });
     }

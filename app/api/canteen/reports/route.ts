@@ -18,18 +18,26 @@ export async function GET(req: NextRequest) {
         await connectToDatabase();
 
         const now = new Date();
-        let startDate = new Date();
-        startDate.setHours(0, 0, 0, 0);
+        const istOffset = 5.5 * 60 * 60 * 1000;
+        const istNow = new Date(now.getTime() + istOffset);
+
+        // Calculate IST midnight bounds
+        let startIST = new Date(istNow);
+        startIST.setUTCHours(0, 0, 0, 0);
 
         if (period === 'weekly') {
-            startDate.setDate(now.getDate() - 7);
+            startIST.setUTCDate(istNow.getUTCDate() - 7);
         } else if (period === 'monthly') {
-            startDate.setDate(1);
-            startDate.setHours(0, 0, 0, 0);
+            startIST.setUTCDate(1);
+            startIST.setUTCHours(0, 0, 0, 0);
         }
 
-        const endDate = new Date();
-        endDate.setHours(23, 59, 59, 999);
+        const endIST = new Date(istNow);
+        endIST.setUTCHours(23, 59, 59, 999);
+
+        // Convert back to UTC for exact database querying
+        const startDate = new Date(startIST.getTime() - istOffset);
+        const endDate = new Date(endIST.getTime() - istOffset);
 
         const paidFilter = {
             validForDate: { $gte: startDate, $lte: endDate },
