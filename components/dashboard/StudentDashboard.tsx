@@ -352,8 +352,12 @@ export default function StudentDashboard({ user }: { user: any }) {
                         </div>
                     ) : (
                         <div className="text-center">
-                            <p className="text-gray-400 text-sm">Booking opens at <span className="text-yellow-400 font-bold">3:00 PM</span> today.</p>
-                            <button disabled className="mt-4 glass-button bg-gray-700 cursor-not-allowed w-full opacity-50">Booking Not Open Yet</button>
+                            <p className="text-gray-400 text-sm">
+                                Booking opens at <span className="text-yellow-400 font-bold">3:00 PM</span> {istHour >= 20 ? 'tomorrow' : 'today'}.
+                            </p>
+                            <button disabled className="mt-4 glass-button bg-gray-700 cursor-not-allowed w-full opacity-50">
+                                {istHour >= 20 ? 'Booking Closed' : 'Booking Not Open Yet'}
+                            </button>
                         </div>
                     )}
                     {message && <p className="mt-4 text-sm text-gray-300">{message}</p>}
