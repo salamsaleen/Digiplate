@@ -28,31 +28,25 @@ export async function POST(req: NextRequest) {
 
         // --- EXPIRATION CHECK ---
         const now = new Date();
-        const istDate = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
-        const validDate = new Date(coupon.validForDate); // This is UTC date from DB
+        const validDate = new Date(coupon.validForDate); 
 
-        // Normalize validDate to local date components for comparison
-        // coupon.validForDate was created via lib/time.ts which uses "IST stored as UTC" logic
-        // So validDate object here represents the target date at 12:00:00.
+        const dateFormatter = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata', year: 'numeric', month: '2-digit', day: '2-digit' });
+        const istNowStr = dateFormatter.format(now);
+        const validStr = dateFormatter.format(validDate);
 
-        // Check if dates match (Year, Month, Date)
-        const isSameDay =
-            istDate.getFullYear() === validDate.getFullYear() &&
-            istDate.getMonth() === validDate.getMonth() &&
-            istDate.getDate() === validDate.getDate();
-
-        if (!isSameDay) {
-            // If checking validity for TODAY, but coupon is for another day:
-            // return invalid/expired logic
-            if (istDate < validDate) {
-                return NextResponse.json({ message: `Coupon is valid for ${validDate.toLocaleDateString()}, not today.`, coupon, valid: false }, { status: 400 });
+        if (istNowStr !== validStr) {
+            if (istNowStr < validStr) {
+                return NextResponse.json({ message: `Coupon is valid for ${validStr}, not today.`, coupon, valid: false }, { status: 400 });
             } else {
                 return NextResponse.json({ message: 'Coupon Expired (Date Passed)', coupon, valid: false }, { status: 400 });
             }
         }
 
         // If it IS the same day, check for 3:00 PM cutoff (15:00)
-        if (istDate.getHours() >= 15) {
+        const hourFormatter = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Kolkata', hour: 'numeric', hourCycle: 'h23' });
+        const istHour = parseInt(hourFormatter.format(now), 10);
+
+        if (istHour >= 15) {
             return NextResponse.json({ message: 'Coupon Expired (Time limit 3:00 PM passed)', coupon, valid: false }, { status: 400 });
         }
         // ------------------------
