@@ -51,9 +51,7 @@ export async function GET(req: NextRequest) {
                 $group: {
                     _id: null,
                     totalRevenue: { $sum: { $cond: [{ $gt: ['$amountPaid', 0] }, '$amountPaid', 10] } },
-                    prepaidCount: {
-                        $sum: { $cond: [{ $eq: ['$status', 'active'] }, 1, 0] }
-                    }
+                    prepaidCount: { $sum: 1 } // Count all paid coupons
                 }
             }
         ]);
