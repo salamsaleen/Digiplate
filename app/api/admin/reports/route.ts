@@ -5,6 +5,7 @@ import { authOptions } from '@/lib/auth';
 import connectToDatabase from '@/lib/db';
 import User from '@/models/User';
 import Coupon from '@/models/Coupon';
+import { getTodayLunchDate } from '@/lib/time';
 
 export async function GET(req: NextRequest) {
     try {
@@ -18,24 +19,28 @@ export async function GET(req: NextRequest) {
 
         await connectToDatabase();
 
-        const now = new Date();
-        let startDate = new Date();
-        startDate.setHours(0, 0, 0, 0);
+        const todayLunch = getTodayLunchDate();
 
-        if (period === 'weekly') {
-            startDate.setDate(now.getDate() - 7);
-        } else if (period === 'monthly') {
-            startDate.setDate(1);
-            startDate.setHours(0, 0, 0, 0);
+        let dateFilter: any = {};
+        let startDate = new Date(todayLunch);
+        let endDate = new Date(todayLunch);
+
+        if (period === 'daily') {
+            dateFilter = {
+                validForDate: todayLunch,
+                status: { $in: ['active', 'redeemed', 'expired', 'transferred'] }
+            };
+        } else {
+            if (period === 'weekly') {
+                startDate.setDate(todayLunch.getDate() - 7);
+            } else if (period === 'monthly') {
+                startDate.setDate(1);
+            }
+            dateFilter = {
+                validForDate: { $gte: startDate, $lte: todayLunch },
+                status: { $in: ['active', 'redeemed', 'expired', 'transferred'] }
+            };
         }
-
-        const endDate = new Date();
-        endDate.setHours(23, 59, 59, 999);
-
-        const dateFilter = {
-            validForDate: { $gte: startDate, $lte: endDate },
-            status: { $in: ['active', 'redeemed', 'expired', 'transferred'] }
-        };
 
         // 1. Financial Summary — use real amountPaid aggregation
         const financialAgg = await Coupon.aggregate([

@@ -351,31 +351,48 @@ export default function SuperAdminDashboard({ user }: { user: any }) {
                                 <svg fill="none" height="24" shapeRendering="geometricPrecision" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" viewBox="0 0 24 24" width="24"><path d="M6 9l6 6 6-6"></path></svg>
                             </span>
                         </summary>
-                        <div className="space-y-6 mt-6 pt-4 border-t border-white/10">
-                            <div className="flex justify-between items-center pb-2">
+                        <div className="space-y-4 mt-6 pt-4 border-t border-white/10">
+                            <div className="flex justify-between items-center pb-1">
                                 <span className="text-gray-300">Total Students Registered</span>
-                                <span className="font-bold text-3xl text-fuchsia-400">{stats.totalStudents}</span>
+                                <span className="font-bold text-xl text-fuchsia-400">{stats.totalStudents}</span>
                             </div>
-                            <div className="flex justify-between items-center pb-2">
-                                <span className="text-gray-300">Active Coupons (Today)</span>
-                                <span className="font-bold text-3xl text-orange-400">{stats.activeCoupons}</span>
-                            </div>
-                            <div className="flex justify-between items-center pb-2">
-                                <span className="text-gray-300">Coupons Redeemed Today</span>
-                                <span className="font-bold text-3xl text-indigo-400">{stats.redeemedToday}</span>
-                            </div>
-                            <div className="border-t border-white/10 pt-4 mt-2">
-                                <div className="flex justify-between items-center pb-2">
-                                    <span className="text-gray-300">Paid Meals Count</span>
-                                    <span className="font-bold text-3xl text-cyan-300">{stats.paidCount || 0}</span>
+                            
+                            <div className="border-t border-white/10 pt-3">
+                                <p className="text-sm text-gray-500 font-semibold mb-2">Today's Meal Stats</p>
+                                <div className="flex justify-between items-center pb-1">
+                                    <span className="text-gray-300 text-sm pl-2">• Polled (Unpaid)</span>
+                                    <span className="font-bold text-lg text-orange-400">{stats.polledToday || 0}</span>
                                 </div>
-                                <div className="flex justify-between items-center pb-2">
-                                    <span className="text-gray-300">Total Revenue (Today)</span>
-                                    <span className="font-bold text-3xl text-rose-300">₹{stats.revenue || 0}</span>
+                                <div className="flex justify-between items-center pb-1">
+                                    <span className="text-gray-300 text-sm pl-2">• Paid & Confirmed</span>
+                                    <span className="font-bold text-lg text-cyan-300">{stats.paidToday || 0}</span>
                                 </div>
-                                <div className="flex justify-between items-center pb-2">
+                                <div className="flex justify-between items-center pb-1">
+                                    <span className="text-gray-300 text-sm pl-2">• Redeemed</span>
+                                    <span className="font-bold text-lg text-indigo-400">{stats.redeemedToday || 0}</span>
+                                </div>
+                                <div className="flex justify-between items-center pt-1">
+                                    <span className="text-gray-300 text-sm pl-2">• Revenue</span>
+                                    <span className="font-bold text-lg text-rose-300">₹{stats.revenue || 0}</span>
+                                </div>
+                            </div>
+                            
+                            <div className="border-t border-white/10 pt-3">
+                                <p className="text-sm text-gray-500 font-semibold mb-2">Tomorrow's Meal Stats</p>
+                                <div className="flex justify-between items-center pb-1">
+                                    <span className="text-gray-300 text-sm pl-2">• Polled (Unpaid)</span>
+                                    <span className="font-bold text-lg text-orange-400">{stats.polledTomorrow || 0}</span>
+                                </div>
+                                <div className="flex justify-between items-center pb-1">
+                                    <span className="text-gray-300 text-sm pl-2">• Paid & Confirmed</span>
+                                    <span className="font-bold text-lg text-cyan-300">{stats.paidTomorrow || 0}</span>
+                                </div>
+                            </div>
+
+                            <div className="border-t border-white/10 pt-3">
+                                <div className="flex justify-between items-center">
                                     <span className="text-gray-300">Total Revenue (Month)</span>
-                                    <span className="font-bold text-3xl text-emerald-300">₹{stats.monthlyRevenue || 0}</span>
+                                    <span className="font-bold text-xl text-emerald-300">₹{stats.monthlyRevenue || 0}</span>
                                 </div>
                             </div>
                         </div>

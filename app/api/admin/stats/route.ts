@@ -6,6 +6,7 @@ import { authOptions } from '@/lib/auth';
 import connectToDatabase from '@/lib/db';
 import User from '@/models/User';
 import Coupon from '@/models/Coupon';
+import { getTodayLunchDate, getNextLunchDate } from '@/lib/time';
 
 export async function GET(req: NextRequest) {
     try {
@@ -19,28 +20,36 @@ export async function GET(req: NextRequest) {
         // Count Total Students
         const totalStudents = await User.countDocuments({ role: 'student' });
 
-        // Count Redeemed Today
-        const startOfDay = new Date();
-        startOfDay.setHours(0, 0, 0, 0);
-        const endOfDay = new Date();
-        endOfDay.setHours(23, 59, 59, 999);
+        const todayLunch = getTodayLunchDate();
+        const tomorrowLunch = getNextLunchDate();
 
-        const activeCoupons = await Coupon.countDocuments({
-            status: 'active',
-            validForDate: { $gte: startOfDay, $lt: endOfDay }
-        });
-
+        // Count Redeemed Today (Redeemed status, for today's meal)
         const redeemedToday = await Coupon.countDocuments({
             status: 'redeemed',
-            redeemedAt: { $gte: startOfDay, $lt: endOfDay }
+            validForDate: todayLunch
         });
 
-        // Revenue & Paid Count Logic (Same as Canteen, but Global)
-        // We can just count all active/redeemed/transferred/expired coupons created or valid for today.
-        // Let's stick to validForDate = today for "Revenue for Today's Meal".
+        // Polled Today (unpaid for today)
+        const polledToday = await Coupon.countDocuments({
+            status: 'polled',
+            validForDate: todayLunch
+        });
 
-        const paidCouponsCount = await Coupon.countDocuments({
-            validForDate: { $gte: startOfDay, $lt: endOfDay },
+        // Polled Tomorrow (unpaid for tomorrow)
+        const polledTomorrow = await Coupon.countDocuments({
+            status: 'polled',
+            validForDate: tomorrowLunch
+        });
+
+        // Paid Today (active, redeemed, transferred, expired for today)
+        const paidToday = await Coupon.countDocuments({
+            validForDate: todayLunch,
+            status: { $in: ['active', 'redeemed', 'transferred', 'expired'] }
+        });
+
+        // Paid Tomorrow (active, redeemed, transferred, expired for tomorrow)
+        const paidTomorrow = await Coupon.countDocuments({
+            validForDate: tomorrowLunch,
             status: { $in: ['active', 'redeemed', 'transferred', 'expired'] }
         });
 
@@ -48,20 +57,25 @@ export async function GET(req: NextRequest) {
         const startOfMonth = new Date();
         startOfMonth.setDate(1);
         startOfMonth.setHours(0, 0, 0, 0);
+        const endOfMonth = new Date();
+        endOfMonth.setMonth(endOfMonth.getMonth() + 1, 0); // Last day of month
+        endOfMonth.setHours(23, 59, 59, 999);
 
         const monthlyPaidCount = await Coupon.countDocuments({
-            validForDate: { $gte: startOfMonth, $lt: endOfDay },
+            validForDate: { $gte: startOfMonth, $lt: endOfMonth },
             status: { $in: ['active', 'redeemed', 'transferred', 'expired'] }
         });
 
-        const revenue = paidCouponsCount * 10;
+        const revenue = paidToday * 10;
         const monthlyRevenue = monthlyPaidCount * 10;
 
         return NextResponse.json({
             totalStudents,
-            activeCoupons,
+            polledToday,
+            polledTomorrow,
+            paidToday,
+            paidTomorrow,
             redeemedToday,
-            paidCount: paidCouponsCount,
             revenue,
             monthlyRevenue
         });
