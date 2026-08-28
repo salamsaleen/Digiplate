@@ -132,7 +132,7 @@ export default function CanteenDashboard({ user }: { user: any }) {
 
             const doc = new jsPDF();
             const pageWidth = doc.internal.pageSize.getWidth();
-            const dateStr = new Date().toLocaleDateString('en-IN');
+            const dateStr = new Date().toLocaleString('en-IN');
             const periodLabel = period.charAt(0).toUpperCase() + period.slice(1);
             const startStr = new Date(data.startDate).toLocaleDateString('en-IN');
             const endStr = new Date(data.endDate).toLocaleDateString('en-IN');
