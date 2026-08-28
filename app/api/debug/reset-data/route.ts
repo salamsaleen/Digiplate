@@ -16,13 +16,10 @@ export async function POST(req: NextRequest) {
         // 1. Delete all Coupons (Resets Polling/Booking)
         await Coupon.deleteMany({});
 
-        // 2. Reset Student Wallets to 500
-        await User.updateMany({ role: 'student' }, { walletBalance: 500 });
-
         // 3. Keep SystemSettings (or reset if needed) - keeping them allows tomorrow's config
         // await SystemSettings.deleteMany({}); // Uncomment if you want to wipe settings too
 
-        return NextResponse.json({ message: 'App data reset: Coupons cleared, Wallets reset to 500.' });
+        return NextResponse.json({ message: 'App data reset: Coupons cleared.' });
     } catch (error) {
         return NextResponse.json({ message: 'Error resetting data', error }, { status: 500 });
     }

@@ -19,7 +19,7 @@ export default async function DashboardPage() {
     const role = (session.user as any).role;
     const userId = (session.user as any).id;
 
-    // Fetch full user from DB to get walletBalance and latest data
+    // Fetch full user from DB to get latest data
     let fullUser = { ...session.user } as any;
     try {
         await connectToDatabase();
@@ -27,7 +27,6 @@ export default async function DashboardPage() {
         if (dbUser) {
             fullUser = {
                 ...fullUser,
-                walletBalance: (dbUser as any).walletBalance ?? 0,
                 phone: (dbUser as any).phone || '',
                 program: (dbUser as any).program || '',
             };

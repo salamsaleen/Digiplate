@@ -44,10 +44,6 @@ const UserSchema = new Schema({
         enum: ['ug', 'pg'], // ug = BA/B.Sc/B.Com, pg = MA/M.Sc/M.Com
         default: 'ug',
     },
-    walletBalance: {
-        type: Number,
-        default: 0,
-    },
     createdAt: {
         type: Date,
         default: Date.now,

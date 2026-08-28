@@ -64,8 +64,7 @@ export async function GET() {
             password,
             role: 'student',
             department: 'cs',
-            program: 'ug',
-            walletBalance: 500
+            program: 'ug'
         });
 
         // History BA Student
@@ -76,8 +75,7 @@ export async function GET() {
             password,
             role: 'student',
             department: 'history',
-            program: 'ug',
-            walletBalance: 500
+            program: 'ug'
         });
 
         // History MA Student
@@ -88,8 +86,7 @@ export async function GET() {
             password,
             role: 'student',
             department: 'history',
-            program: 'pg',
-            walletBalance: 500
+            program: 'pg'
         });
 
         // 5. Generate 10 Random Students
@@ -107,8 +104,7 @@ export async function GET() {
                 password,
                 role: 'student',
                 department: dept,
-                program: prog,
-                walletBalance: 500
+                program: prog
             });
         }
 

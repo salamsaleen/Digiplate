@@ -10,7 +10,7 @@ export default function StudentDashboard({ user }: { user: any }) {
     const [coupon, setCoupon] = useState<any>(null);
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState('');
-    const [showPaymentModal, setShowPaymentModal] = useState(false);
+    // Removed showPaymentModal as UPI is now the only payment option
 
     // Countdown timer for morning payment window
     const [countdown, setCountdown] = useState('');
@@ -194,7 +194,7 @@ export default function StudentDashboard({ user }: { user: any }) {
                 if (action === 'request') setMessage('Request Sent! Waiting for Admin Approval.');
                 if (action === 'pay' || action === 'pay_direct') {
                     setMessage('✅ Payment Successful! Coupon Generated.');
-                    setShowPaymentModal(false);
+                    // Modal removed
                     // Use the coupon already returned in the API response
                     if (data.coupon) {
                         pendingScrollRef.current = true;
@@ -230,7 +230,7 @@ export default function StudentDashboard({ user }: { user: any }) {
             const data = await res.json().catch(() => ({}));
             setLinkUrl(data.linkUrl);
             setLinkId(data.linkId);
-            setShowPaymentModal(false);
+            // Modal removed
             setShowQrModal(true);
             setMessage('');
         } catch (error: any) {
@@ -298,7 +298,7 @@ export default function StudentDashboard({ user }: { user: any }) {
                             <p className="text-3xl font-mono font-bold text-yellow-300 animate-pulse">{countdown}</p>
                             <p className="text-xs text-gray-500 mt-1">Payment closes at 10:00 AM</p>
                         </div>
-                        <button onClick={() => setShowPaymentModal(true)} disabled={loading}
+                        <button onClick={handleUpiQrPayment} disabled={loading}
                             className="glass-button bg-green-600 hover:bg-green-700 w-full border-2 border-green-400 shadow-[0_0_15px_rgba(34,197,94,0.4)] mb-3">
                             💰 Pay ₹10 Now (Get Coupon)
                         </button>
@@ -344,7 +344,7 @@ export default function StudentDashboard({ user }: { user: any }) {
                                 ✋ Poll Only
                                 <span className="block text-xs text-orange-300/70 mt-0.5">Pay tomorrow morning (6–10 AM)</span>
                             </button>
-                            <button onClick={() => setShowPaymentModal(true)} disabled={loading}
+                            <button onClick={handleUpiQrPayment} disabled={loading}
                                 className="glass-button bg-green-600 hover:bg-green-700 w-full border-2 border-green-400 shadow-[0_0_15px_rgba(34,197,94,0.4)]">
                                 ⚡ Poll & Pay Now (₹10)
                                 <span className="block text-xs text-green-200/70 mt-0.5">Get your coupon immediately</span>
@@ -487,41 +487,11 @@ export default function StudentDashboard({ user }: { user: any }) {
                         {{ 'cs': 'B.Sc Computer Science', 'chemistry': 'B.Sc Chemistry', 'commerce': user.program === 'pg' ? 'M.Com' : 'B.Com', 'history': user.program === 'pg' ? 'MA History' : 'BA History', 'economics': user.program === 'pg' ? 'MA Economics' : 'BA Economics', 'jmc': user.program === 'pg' ? 'MA JMC' : 'BA JMC' }[user.department as string] || user.department?.toUpperCase()}
                     </p>
                 </div>
-                <div className="text-right">
-                    <p className="text-gray-400 text-sm">Wallet</p>
-                    <p className="text-xl font-bold text-green-400">₹{user.walletBalance}</p>
-                </div>
             </div>
 
             {renderActionArea()}
 
-            {/* Payment Method Selection Modal */}
-            {showPaymentModal && (
-                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-                    <div className="glass-panel p-8 max-w-sm w-full border border-gray-700">
-                        <h3 className="text-xl font-bold mb-2 text-white">Select Payment Method</h3>
-                        <p className="mb-6 text-gray-300">Pay ₹10 to activate your coupon.</p>
-                        {loading ? (
-                            <div className="flex flex-col items-center my-6 gap-3">
-                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-                                <p className="text-gray-400 text-sm">{message || 'Processing...'}</p>
-                            </div>
-                        ) : (
-                            <div className="flex flex-col gap-3 mt-6">
-                                <button onClick={() => handleAction('pay_direct')}
-                                    className="flex items-center justify-center gap-2 px-4 py-3 bg-gray-700 text-white rounded hover:bg-gray-600 font-bold shadow-lg border border-gray-500">
-                                    <span>💳</span> Wallet (Bal: ₹{user.walletBalance})
-                                </button>
-                                <button onClick={handleUpiQrPayment}
-                                    className="flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white rounded hover:bg-blue-700 font-bold shadow-lg border border-blue-400">
-                                    <span>📱</span> Pay via UPI / QR Code
-                                </button>
-                                <button onClick={() => setShowPaymentModal(false)} className="mt-2 px-4 py-2 text-gray-400 hover:text-white text-sm">Cancel</button>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            )}
+            {/* Payment Method Modal Removed — Direct to UPI */}
 
             {/* UPI QR Code Payment Modal */}
             {showQrModal && (
