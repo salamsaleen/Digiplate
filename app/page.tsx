@@ -85,7 +85,7 @@ export default function Home() {
             </p>
 
             <ul className="space-y-3 mb-6">
-              <li className="flex flex-col p-2 bg-gradient-to-r from-amber-500/10 to-orange-500/10 rounded-lg border border-amber-500/20 shadow-[0_0_15px_rgba(245,158,11,0.2)]">
+              <li className="flex flex-col">
                 <span className="text-sm font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-orange-400 drop-shadow-md flex items-center gap-1.5">
                   1. Abdul Salam M P
                 </span>
