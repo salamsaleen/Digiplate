@@ -43,10 +43,11 @@ export default function StudentDashboard({ user }: { user: any }) {
     useEffect(() => {
         const tick = () => {
             const now = new Date();
-            const istNow = new Date(now.getTime() + 5.5 * 60 * 60 * 1000);
-            const deadline = new Date(istNow);
-            deadline.setUTCHours(4, 30, 0, 0); // 10:00 AM IST = 04:30 UTC
-            const diff = deadline.getTime() - istNow.getTime();
+            // 10:00 AM IST is exactly 04:30 AM UTC on the same day
+            const deadline = new Date(now);
+            deadline.setUTCHours(4, 30, 0, 0);
+            
+            const diff = deadline.getTime() - now.getTime();
             if (diff <= 0) { setCountdown('00:00:00'); return; }
             const h = Math.floor(diff / 3600000).toString().padStart(2, '0');
             const m = Math.floor((diff % 3600000) / 60000).toString().padStart(2, '0');
