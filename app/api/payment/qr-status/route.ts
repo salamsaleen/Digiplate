@@ -44,25 +44,21 @@ export async function GET(req: NextRequest) {
         // If the student polled yesterday and is paying this morning, look for TODAY's coupon.
         // Otherwise fall back to next lunch date (Poll & Pay during polling window).
         const todayDate = getTodayLunchDate();
-        const todayStart = new Date(todayDate); todayStart.setHours(0, 0, 0, 0);
-        const todayEnd = new Date(todayDate); todayEnd.setHours(23, 59, 59, 999);
 
         const todayPolled = await Coupon.findOne({
             studentId: user.id,
-            validForDate: { $gte: todayStart, $lt: todayEnd },
+            validForDate: todayDate,
             status: { $in: ['polled', 'approved'] }
         });
 
         const lunchDate = todayPolled ? todayDate : getNextLunchDate();
-        const start = new Date(lunchDate); start.setHours(0, 0, 0, 0);
-        const end = new Date(lunchDate); end.setHours(23, 59, 59, 999);
 
-        const settings = await SystemSettings.findOne({ date: { $gte: start, $lt: end } });
+        const settings = await SystemSettings.findOne({ date: lunchDate });
         const sideDishes = settings?.sideDishes || ['പപ്പടം', 'അച്ചാർ', 'ഉപ്പേരി'];
 
         const existing = await Coupon.findOne({
             studentId: user.id,
-            validForDate: { $gte: start, $lt: end }
+            validForDate: lunchDate
         });
 
         let coupon;

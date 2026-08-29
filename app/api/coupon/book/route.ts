@@ -31,19 +31,17 @@ export async function POST(req: NextRequest) {
             if (!open) return NextResponse.json({ message: timeMsg }, { status: 400 });
 
             const lunchDate = getNextLunchDate();
-            const start = new Date(lunchDate); start.setHours(0, 0, 0, 0);
-            const end = new Date(lunchDate); end.setHours(23, 59, 59, 999);
 
             const existing = await Coupon.findOne({
                 studentId,
-                validForDate: { $gte: start, $lt: end },
+                validForDate: lunchDate,
                 status: { $in: ['polled', 'requested', 'approved', 'active', 'redeemed'] }
             });
             if (existing) {
                 return NextResponse.json({ message: `Already polled. Status: ${existing.status}` }, { status: 400 });
             }
 
-            const settingsDoc = await SystemSettings.findOne({ date: { $gte: start, $lt: end } });
+            const settingsDoc = await SystemSettings.findOne({ date: lunchDate });
             const sideDishes = settingsDoc?.sideDishes || ['പപ്പടം', 'അച്ചാർ', 'ഉപ്പേരി'];
 
             const code = Math.random().toString(36).substring(2, 10).toUpperCase();
