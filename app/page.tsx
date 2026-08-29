@@ -81,7 +81,7 @@ export default function Home() {
 
             <h3 className="text-sm font-bold text-indigo-300 uppercase tracking-wider mb-2">Development Team</h3>
             <p className="text-xs text-gray-400 mb-4 bg-gray-800/50 p-2 rounded-lg border border-gray-700">
-              BSc (Honours) Computer Science<br />3rd Year Students
+              B.sc.(Hons.) Computer Science<br />3rd Year Students
             </p>
 
             <ul className="space-y-3 mb-6">
