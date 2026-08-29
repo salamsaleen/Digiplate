@@ -471,6 +471,23 @@ export default function StudentDashboard({ user }: { user: any }) {
             );
         }
 
+        if (coupon.status === 'redeemed') {
+            return (
+                <div className="p-6 text-center rounded-xl border border-blue-500/30 bg-blue-900/10 w-full max-w-md mx-auto shadow-[0_0_20px_rgba(59,130,246,0.15)]">
+                    <div className="flex justify-center mb-4">
+                        <div className="bg-blue-500/20 p-4 rounded-full border border-blue-400/30">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                        </div>
+                    </div>
+                    <h2 className="text-2xl font-bold text-blue-400 mb-2">Coupon Redeemed</h2>
+                    <p className="text-white text-lg mb-2">Enjoy your meal!</p>
+                    <p className="text-gray-400 text-sm bg-black/30 p-3 rounded-lg border border-gray-700 mt-4">
+                        Polling for tomorrow will open automatically at <strong className="text-yellow-400">3:00 PM</strong>.
+                    </p>
+                </div>
+            );
+        }
+
         return <p className="text-white">Status: {coupon.status}</p>;
     };
 
