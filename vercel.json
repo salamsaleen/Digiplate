@@ -38,6 +38,10 @@
         {
             "path": "/api/cron/reminders?type=test_open",
             "schedule": "0 10 * * *"
+        },
+        {
+            "path": "/api/cron/expire-coupons",
+            "schedule": "45 9 * * *"
         }
     ]
 }

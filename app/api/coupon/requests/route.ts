@@ -33,13 +33,13 @@ export async function GET(req: NextRequest) {
 
         const polledCoupons = await Coupon.find({
             department: (session.user as any).department,
-            status: { $in: ['polled', 'active', 'approved', 'redeemed'] },
+            status: { $in: ['polled', 'active', 'approved', 'redeemed', 'expired'] },
             validForDate: targetDate
         }).populate('studentId', 'name email').sort({ createdAt: -1 });
 
         const approvedCoupons = await Coupon.find({
             department: (session.user as any).department,
-            status: { $in: ['approved', 'active', 'redeemed'] },
+            status: { $in: ['approved', 'active', 'redeemed', 'expired'] },
             validForDate: targetDate
         }).populate('studentId', 'name email').sort({ createdAt: -1 });
 

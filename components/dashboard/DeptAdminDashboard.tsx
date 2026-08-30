@@ -152,8 +152,16 @@ export default function DeptAdminDashboard({ user }: { user: any }) {
                                             <p className="font-bold text-gray-200 text-sm">{p.studentId?.name || 'Unknown'} <span className="text-xs text-gray-500">({p.studentId?.program?.toUpperCase()})</span></p>
                                             <p className="text-xs text-purple-300">{p.studentId?.email}</p>
                                         </div>
-                                        <span className={`text-[10px] px-2 py-0.5 rounded uppercase font-bold tracking-wider ${p.status === 'polled' ? 'bg-yellow-500/20 text-yellow-500' : p.status === 'redeemed' ? 'bg-blue-500/20 text-blue-400' : 'bg-green-500/20 text-green-500'}`}>
-                                            {p.status === 'polled' ? 'Poll Only' : p.status === 'redeemed' ? 'Redeemed ✅' : 'Paid'}
+                                        <span className={`text-[10px] px-2 py-0.5 rounded uppercase font-bold tracking-wider ${
+                                            p.status === 'polled' ? 'bg-yellow-500/20 text-yellow-500' : 
+                                            p.status === 'redeemed' ? 'bg-blue-500/20 text-blue-400' : 
+                                            p.status === 'expired' ? 'bg-red-500/20 text-red-400' : 
+                                            'bg-green-500/20 text-green-500'
+                                        }`}>
+                                            {p.status === 'polled' ? 'Poll Only' : 
+                                             p.status === 'redeemed' ? 'Redeemed ✅' : 
+                                             p.status === 'expired' ? 'Expired ❌' : 
+                                             'Paid'}
                                         </span>
                                     </div>
                                 ))}
@@ -175,7 +183,9 @@ export default function DeptAdminDashboard({ user }: { user: any }) {
                                             <p className="text-xs text-green-300">{c.studentId?.email}</p>
                                         </div>
                                         <span className="text-xs text-gray-400 font-mono bg-black/40 px-2 py-1 rounded border border-gray-600">
-                                            Token: {c.code} {c.status === 'redeemed' && <span className="ml-2 text-blue-400 text-[10px] uppercase font-bold bg-blue-500/20 px-1 py-0.5 rounded">Redeemed ✅</span>}
+                                            Token: {c.code} 
+                                            {c.status === 'redeemed' && <span className="ml-2 text-blue-400 text-[10px] uppercase font-bold bg-blue-500/20 px-1 py-0.5 rounded">Redeemed ✅</span>}
+                                            {c.status === 'expired' && <span className="ml-2 text-red-400 text-[10px] uppercase font-bold bg-red-500/20 px-1 py-0.5 rounded">Expired ❌</span>}
                                         </span>
                                     </div>
                                 ))}

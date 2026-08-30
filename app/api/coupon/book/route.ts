@@ -38,7 +38,12 @@ export async function POST(req: NextRequest) {
                 status: { $in: ['polled', 'requested', 'approved', 'active', 'redeemed'] }
             });
             if (existing) {
-                return NextResponse.json({ message: `Already polled. Status: ${existing.status}` }, { status: 400 });
+                if (userEmail.toLowerCase() === 'teststudent@digiplate.com') {
+                    // Test student bypass: delete old coupon so they can test the flow again
+                    await Coupon.deleteOne({ _id: existing._id });
+                } else {
+                    return NextResponse.json({ message: `Already polled. Status: ${existing.status}` }, { status: 400 });
+                }
             }
 
             const settingsDoc = await SystemSettings.findOne({ date: lunchDate });
