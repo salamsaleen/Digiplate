@@ -75,11 +75,13 @@ export default function StudentDashboard({ user }: { user: any }) {
                         setMessage('✅ Payment Successful! Your meal coupon is ready.');
                     } else {
                         pendingScrollRef.current = true;
+                        setMessage(`❌ Verification failed: ${data.message || 'Payment not completed or pending.'}`);
                         fetchCoupon(); // Fallback
                     }
                 })
                 .catch(err => {
                     console.error('Failed to verify payment link redirect', err);
+                    setMessage('❌ Failed to connect to verification server. Please refresh.');
                     fetchCoupon(); // Fallback
                 })
                 .finally(() => {
@@ -194,7 +196,7 @@ export default function StudentDashboard({ user }: { user: any }) {
             const data = await res.json().catch(() => ({}));
             
             // Initialize Cashfree SDK
-            const env = process.env.NEXT_PUBLIC_CASHFREE_ENV === 'PRODUCTION' ? 'production' : 'sandbox';
+            const env = process.env.NEXT_PUBLIC_CASHFREE_ENV?.toUpperCase() === 'PRODUCTION' ? 'production' : 'sandbox';
             const cashfree = await load({ mode: env });
             
             cashfree.checkout({

@@ -7,7 +7,7 @@
 const CASHFREE_API_VERSION = '2023-08-01';
 
 function getBaseUrl(): string {
-    return process.env.CASHFREE_ENV === 'PRODUCTION'
+    return process.env.CASHFREE_ENV?.toUpperCase() === 'PRODUCTION'
         ? 'https://api.cashfree.com/pg'
         : 'https://sandbox.cashfree.com/pg';
 }
