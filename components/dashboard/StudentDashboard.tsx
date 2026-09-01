@@ -15,11 +15,7 @@ export default function StudentDashboard({ user }: { user: any }) {
     // Countdown timer for morning payment window
     const [countdown, setCountdown] = useState('');
 
-    // UPI Payment Link state
-    const [showQrModal, setShowQrModal] = useState(false);
-    const [linkUrl, setLinkUrl] = useState('');
-    const [linkId, setLinkId] = useState('');
-    const pollRef = useRef<NodeJS.Timeout | null>(null);
+    
 
     // Canteen Status State
     const [settings, setSettings] = useState<any>({ mealType: 'Rice', isOpen: true, closingReason: '' });
@@ -36,7 +32,7 @@ export default function StudentDashboard({ user }: { user: any }) {
     useEffect(() => {
         fetchCoupon();
         fetchSettings();
-        return () => stopPolling();
+        
     }, []);
 
     // Live countdown to 10:00 AM IST — shown when student has polled and is on meal morning
@@ -62,14 +58,14 @@ export default function StudentDashboard({ user }: { user: any }) {
     // Handle Cashfree redirect back to dashboard after payment
     // Cashfree appends ?cf_link_status=PAID&link_id=...
     useEffect(() => {
-        const paymentStatus = searchParams.get('cf_link_status');
-        const linkIdParam = searchParams.get('link_id');
+        const paymentStatus = searchParams.get('cf_order_status');
+        const orderIdParam = searchParams.get('order_id');
 
-        if (paymentStatus === 'PAID' && linkIdParam) {
+        if (paymentStatus === 'PAYMENT_COMPLETED' && orderIdParam) {
             setMessage('✅ Verifying payment securely...');
 
             // Hit the qr-status endpoint to verify the payment and generate the coupon
-            fetch(`/api/payment/qr-status?linkId=${linkIdParam}`)
+            fetch(`/api/payment/verify?orderId=${orderIdParam}`)
                 .then(res => res.json())
                 .then(data => {
                     if (data.paid && data.coupon) {
@@ -299,7 +295,7 @@ export default function StudentDashboard({ user }: { user: any }) {
                             <p className="text-3xl font-mono font-bold text-yellow-300 animate-pulse">{countdown}</p>
                             <p className="text-xs text-gray-500 mt-1">Payment closes at 10:00 AM</p>
                         </div>
-                        <button onClick={handleUpiQrPayment} disabled={loading}
+                        <button onClick={handlePayment} disabled={loading}
                             className="glass-button bg-green-600 hover:bg-green-700 w-full border-2 border-green-400 shadow-[0_0_15px_rgba(34,197,94,0.4)] mb-3">
                             💰 Pay ₹10 Now (Get Coupon)
                         </button>
@@ -345,7 +341,7 @@ export default function StudentDashboard({ user }: { user: any }) {
                                 ✋ Poll Only
                                 <span className="block text-xs text-orange-300/70 mt-0.5">Pay tomorrow morning (6–10 AM)</span>
                             </button>
-                            <button onClick={handleUpiQrPayment} disabled={loading}
+                            <button onClick={handlePayment} disabled={loading}
                                 className="glass-button bg-green-600 hover:bg-green-700 w-full border-2 border-green-400 shadow-[0_0_15px_rgba(34,197,94,0.4)]">
                                 ⚡ Poll & Pay Now (₹10)
                                 <span className="block text-xs text-green-200/70 mt-0.5">Get your coupon immediately</span>
@@ -511,59 +507,6 @@ export default function StudentDashboard({ user }: { user: any }) {
 
             {/* Payment Method Modal Removed — Direct to UPI */}
 
-            {/* UPI QR Code Payment Modal */}
-            {showQrModal && (
-                <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
-                    <div className="bg-[#0d1829] border border-blue-500/30 rounded-2xl p-6 max-w-sm w-full shadow-2xl shadow-blue-900/30 my-4">
-                        {/* Header */}
-                        <div className="text-center mb-4">
-                            <p className="text-gray-400 text-xs uppercase tracking-widest mb-1">Secure UPI Payment</p>
-                            <h3 className="text-2xl font-bold text-white">Pay ₹10</h3>
-                            <p className="text-gray-400 text-sm mt-1">Scan the QR code with any UPI app</p>
-                        </div>
-
-                        {/* QR Code — encodes Cashfree payment link URL */}
-                        <div className="flex justify-center mb-5">
-                            {linkUrl ? (
-                                <div className="bg-white p-3 rounded-xl shadow-lg border-4 border-white">
-                                    <QRCode value={linkUrl} size={220} />
-                                </div>
-                            ) : (
-                                <div className="w-[252px] h-[252px] bg-white/10 rounded-xl flex items-center justify-center">
-                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400"></div>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Open Payment Page button */}
-                        {linkUrl && (
-                            <a
-                                href={linkUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center justify-center gap-2 w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl mb-4 transition-colors border border-blue-400/50"
-                            >
-                                📱 Open Payment Page
-                            </a>
-                        )}
-
-                        {/* Waiting Indicator */}
-                        <div className="flex items-center justify-center gap-2 bg-blue-950/40 border border-blue-500/20 rounded-xl py-3 mb-4">
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-400 flex-shrink-0"></div>
-                            <p className="text-blue-300 text-sm font-medium">Waiting for payment confirmation...</p>
-                        </div>
-
-                        <p className="text-center text-gray-600 text-xs mb-3">QR code expires in 30 minutes · Powered by Cashfree</p>
-
-                        {/* Cancel */}
-                        <button onClick={handleCloseQrModal}
-                            className="w-full py-2 text-gray-400 hover:text-white text-sm border border-gray-700 rounded-lg hover:border-gray-500 transition-colors">
-                            Cancel Payment
-                        </button>
-
-                    </div>
-                </div>
-            )}
             <PushManager />
         </div>
     );

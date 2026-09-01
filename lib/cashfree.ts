@@ -21,51 +21,44 @@ function getHeaders(): HeadersInit {
     };
 }
 
-export interface CashfreePaymentLinkParams {
-    linkId: string;          // Unique ID you generate
-    amount: number;          // In rupees (NOT paise — Cashfree uses actual INR amount)
-    purpose: string;
+export interface CashfreeOrderParams {
+    orderId: string;
+    amount: number;
     customerName: string;
     customerEmail: string;
-    customerPhone: string;   // 10-digit Indian mobile number required
-    expiryTime: string;      // ISO 8601 e.g. "2025-01-01T18:00:00+05:30"
-    returnUrl: string;       // Redirect after payment
+    customerPhone: string;
+    returnUrl: string;
 }
 
-export interface CashfreePaymentLink {
-    link_id: string;
-    link_url: string;
-    link_status: 'ACTIVE' | 'PAID' | 'EXPIRED' | 'CANCELLED' | string;
-    link_orders?: Array<{ order_id: string; order_amount: number }>;
-    cf_link_id?: number;
+export interface CashfreeOrder {
+    order_id: string;
+    order_status: string;
+    payment_session_id: string;
 }
 
 /**
- * Creates a Cashfree Payment Link.
- * Returns the link_id (for polling) and link_url (for QR code).
+ * Creates a Cashfree Order.
+ * Returns the order_id and payment_session_id (for the JS SDK).
  */
-export async function createPaymentLink(
-    params: CashfreePaymentLinkParams
-): Promise<{ linkId: string; linkUrl: string }> {
+export async function createOrder(
+    params: CashfreeOrderParams
+): Promise<{ orderId: string; paymentSessionId: string }> {
     const body = {
-        link_id: params.linkId,
-        link_amount: params.amount,
-        link_currency: 'INR',
-        link_purpose: params.purpose,
+        order_id: params.orderId,
+        order_amount: params.amount,
+        order_currency: 'INR',
         customer_details: {
+            customer_id: params.orderId, // customer_id is required, using orderId as fallback unique id
             customer_name: params.customerName,
             customer_email: params.customerEmail,
             customer_phone: params.customerPhone,
         },
-        link_expiry_time: params.expiryTime,
-        link_notify: { send_sms: false, send_email: false },
-        link_auto_reminders: false,
-        link_meta: {
+        order_meta: {
             return_url: params.returnUrl,
         },
     };
 
-    const res = await fetch(`${getBaseUrl()}/links`, {
+    const res = await fetch(`${getBaseUrl()}/orders`, {
         method: 'POST',
         headers: getHeaders(),
         body: JSON.stringify(body),
@@ -74,19 +67,19 @@ export async function createPaymentLink(
     if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         throw new Error(
-            err?.message || `Cashfree createPaymentLink failed: ${res.status}`
+            err?.message || `Cashfree createOrder failed: ${res.status}`
         );
     }
 
-    const data: CashfreePaymentLink = await res.json();
-    return { linkId: data.link_id, linkUrl: data.link_url };
+    const data: CashfreeOrder = await res.json();
+    return { orderId: data.order_id, paymentSessionId: data.payment_session_id };
 }
 
 /**
- * Fetches the current status of a Cashfree Payment Link.
+ * Fetches the current status of a Cashfree Order.
  */
-export async function fetchPaymentLink(linkId: string): Promise<CashfreePaymentLink> {
-    const res = await fetch(`${getBaseUrl()}/links/${encodeURIComponent(linkId)}`, {
+export async function fetchOrder(orderId: string): Promise<CashfreeOrder> {
+    const res = await fetch(`${getBaseUrl()}/orders/${encodeURIComponent(orderId)}`, {
         method: 'GET',
         headers: getHeaders(),
     });
@@ -94,7 +87,7 @@ export async function fetchPaymentLink(linkId: string): Promise<CashfreePaymentL
     if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         throw new Error(
-            err?.message || `Cashfree fetchPaymentLink failed: ${res.status}`
+            err?.message || `Cashfree fetchOrder failed: ${res.status}`
         );
     }
 
