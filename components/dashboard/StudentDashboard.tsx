@@ -100,41 +100,7 @@ export default function StudentDashboard({ user }: { user: any }) {
     }, [coupon]);
 
 
-    // Auto-poll Cashfree Payment Link status every 3 seconds
-    useEffect(() => {
-        if (!linkId || !showQrModal) return;
-        stopPolling();
-        pollRef.current = setInterval(async () => {
-            try {
-                const res = await fetch(`/api/payment/qr-status?linkId=${linkId}&mealType=${settings.mealType}`);
-                if (!res.ok) return; // Silent skip for polling error
-                const data = await res.json().catch(() => ({}));
-                if (data.paid) {
-                    stopPolling();
-                    setShowQrModal(false);
-                    setMessage('✅ Payment Successful! Your meal coupon is ready.');
-                    pendingScrollRef.current = true;
-                    // Use coupon from qr-status response directly (already saved to DB)
-                    if (data.coupon) {
-                        setCoupon(data.coupon);
-                    } else {
-                        // Fallback: fetch from DB
-                        await fetchCoupon();
-                    }
-                }
-            } catch (e) {
-                console.error('Poll error:', e);
-            }
-        }, 3000);
-        return () => stopPolling();
-    }, [linkId, showQrModal]);
 
-    const stopPolling = () => {
-        if (pollRef.current) {
-            clearInterval(pollRef.current);
-            pollRef.current = null;
-        }
-    };
 
     async function fetchCoupon(retries = 2): Promise<any> {
         try {
@@ -239,12 +205,7 @@ export default function StudentDashboard({ user }: { user: any }) {
     };
 
 
-    const handleCloseQrModal = () => {
-        stopPolling();
-        setShowQrModal(false);
-        setLinkUrl('');
-        setLinkId('');
-    };
+
 
     const isTester = user?.email?.toLowerCase() === 'teststudent@digiplate.com';
 
