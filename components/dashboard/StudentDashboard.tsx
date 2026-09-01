@@ -180,26 +180,30 @@ export default function StudentDashboard({ user }: { user: any }) {
         }
     };
 
-    // Creates a Cashfree Payment Link → shows QR code of its link URL
-    const handleUpiQrPayment = async () => {
+    // Creates a Cashfree Order → Launches Cashfree SDK Checkout
+    const handlePayment = async () => {
         setLoading(true);
-        setMessage('Creating Payment Link...');
+        setMessage('Initializing Payment...');
         try {
-            const res = await fetch('/api/payment/qr-create', { method: 'POST' });
+            const res = await fetch('/api/payment/order', { method: 'POST' });
             if (!res.ok) {
                 const err = await res.json().catch(() => ({}));
                 throw new Error(err.message || 'Failed to create payment');
             }
             const data = await res.json().catch(() => ({}));
-            setLinkUrl(data.linkUrl);
-            setLinkId(data.linkId);
-            // Modal removed
-            setShowQrModal(true);
-            setMessage('');
+            
+            // Initialize Cashfree SDK
+            const env = process.env.NEXT_PUBLIC_CASHFREE_ENV === 'PRODUCTION' ? 'production' : 'sandbox';
+            const cashfree = await load({ mode: env });
+            
+            cashfree.checkout({
+                paymentSessionId: data.paymentSessionId,
+                // returnUrl is already configured on backend, but SDK might use it if redirect is needed
+            });
+            setMessage('Opening secure checkout...');
         } catch (error: any) {
             console.error(error);
             setMessage(`❌ ${error.message}`);
-        } finally {
             setLoading(false);
         }
     };
