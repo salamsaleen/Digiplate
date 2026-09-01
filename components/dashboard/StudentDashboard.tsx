@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import QRCode from 'react-qr-code';
 import { useRouter } from 'next/navigation';
+import { load } from '@cashfreepayments/cashfree-js';
 
 export default function StudentDashboard({ user }: { user: any }) {
     const [coupon, setCoupon] = useState<any>(null);
