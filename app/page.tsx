@@ -87,7 +87,7 @@ export default function Home() {
             <ul className="space-y-3 mb-6">
               <li className="flex flex-col">
                 <span className="text-sm font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-orange-400 drop-shadow-md flex items-center gap-1.5">
-                  1. Abdul Salam M P
+                  1. ABDUL SALAM MANAL PARAMBIL
                 </span>
                 <span className="text-xs font-bold text-amber-200 uppercase tracking-wider mt-0.5">Principal Developer & Founder</span>
               </li>
