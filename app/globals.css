@@ -15,8 +15,8 @@
 
 /* Global Reset & Body */
 html {
-  overflow-x: hidden;
-  overscroll-behavior: none;
+  /* TWA/PWA Native App Feel */
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
@@ -24,10 +24,12 @@ body {
   background: linear-gradient(135deg, #020617 0%, #1e3a8a 100%);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  min-height: 100vh;
   min-height: 100dvh;
   margin: 0;
+  /* Re-enable vertical scrolling, keep horizontal locked */
   overflow-x: hidden;
-  overscroll-behavior: none;
+  overflow-y: auto;
 }
 
 /* Mobile: prevent overflow from causing layout shift */

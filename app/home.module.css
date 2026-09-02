@@ -9,6 +9,7 @@
     background: linear-gradient(135deg, #020617 0%, #1e3a8a 100%);
     color: #f1f5f9;
     padding: 1.5rem;
+    padding: max(1.5rem, env(safe-area-inset-top)) max(1.5rem, env(safe-area-inset-right)) max(1.5rem, env(safe-area-inset-bottom)) max(1.5rem, env(safe-area-inset-left));
     text-align: center;
     font-family: 'Inter', sans-serif;
     overflow-x: hidden;

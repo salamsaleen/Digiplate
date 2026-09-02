@@ -23,33 +23,40 @@ export async function GET(req: NextRequest) {
         const todayLunch = getTodayLunchDate();
         const tomorrowLunch = getNextLunchDate();
 
+        // Exact match bounds for validForDate to avoid cross-day timezone collisions
+        const todayStartUTC = new Date(todayLunch);
+        const todayEndUTC = new Date(todayLunch.getTime() + 24 * 60 * 60 * 1000);
+
+        const tomorrowStartUTC = new Date(tomorrowLunch);
+        const tomorrowEndUTC = new Date(tomorrowLunch.getTime() + 24 * 60 * 60 * 1000);
+
         // Count Redeemed Today (Redeemed status, for today's meal)
         const redeemedToday = await Coupon.countDocuments({
             status: 'redeemed',
-            validForDate: todayLunch
+            validForDate: { $gte: todayStartUTC, $lt: todayEndUTC }
         });
 
         // Polled Today (unpaid for today)
         const polledToday = await Coupon.countDocuments({
             status: 'polled',
-            validForDate: todayLunch
+            validForDate: { $gte: todayStartUTC, $lt: todayEndUTC }
         });
 
         // Polled Tomorrow (unpaid for tomorrow)
         const polledTomorrow = await Coupon.countDocuments({
             status: 'polled',
-            validForDate: tomorrowLunch
+            validForDate: { $gte: tomorrowStartUTC, $lt: tomorrowEndUTC }
         });
 
         // Paid Today (active, redeemed, transferred, expired for today)
         const paidToday = await Coupon.countDocuments({
-            validForDate: todayLunch,
+            validForDate: { $gte: todayStartUTC, $lt: todayEndUTC },
             status: { $in: ['active', 'redeemed', 'transferred', 'expired'] }
         });
 
         // Paid Tomorrow (active, redeemed, transferred, expired for tomorrow)
         const paidTomorrow = await Coupon.countDocuments({
-            validForDate: tomorrowLunch,
+            validForDate: { $gte: tomorrowStartUTC, $lt: tomorrowEndUTC },
             status: { $in: ['active', 'redeemed', 'transferred', 'expired'] }
         });
 

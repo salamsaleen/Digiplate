@@ -36,17 +36,8 @@ export async function GET(req: NextRequest) {
             status: { $in: ['polled', 'requested', 'approved', 'active', 'redeemed'] }
         });
 
-        // Redeemed count for TODAY in IST
-        const todayISTStartUTC = new Date(istNow);
-        todayISTStartUTC.setUTCHours(0, 0, 0, 0);
-        const todayISTStart = new Date(todayISTStartUTC.getTime() - istOffset);
-        
-        const todayISTEndUTC = new Date(istNow);
-        todayISTEndUTC.setUTCHours(23, 59, 59, 999);
-        const todayISTEnd = new Date(todayISTEndUTC.getTime() - istOffset);
-
         const todayRedeemedCount = await Coupon.countDocuments({
-            redeemedAt: { $gte: todayISTStart, $lt: todayISTEnd },
+            validForDate: { $gte: todayStartUTC, $lt: todayEndUTC },
             status: 'redeemed'
         });
 
