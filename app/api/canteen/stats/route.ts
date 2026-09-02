@@ -31,9 +31,10 @@ export async function GET(req: NextRequest) {
         const tomorrowEndUTC = new Date(nextLunchDate.getTime() + 24 * 60 * 60 * 1000);
 
         // -- TODAY STATS --
+        // Estimated = polled/approved + paid (active, redeemed, expired). Transferred is ignored to avoid double counting.
         const todayPolledCount = await Coupon.countDocuments({
             validForDate: { $gte: todayStartUTC, $lt: todayEndUTC },
-            status: { $in: ['polled', 'requested', 'approved', 'active', 'redeemed'] }
+            status: { $in: ['polled', 'requested', 'approved', 'active', 'redeemed', 'expired'] }
         });
 
         const todayRedeemedCount = await Coupon.countDocuments({
@@ -43,14 +44,14 @@ export async function GET(req: NextRequest) {
 
         const todayPaidCouponsCount = await Coupon.countDocuments({
             validForDate: { $gte: todayStartUTC, $lt: todayEndUTC },
-            status: { $in: ['active', 'redeemed', 'transferred', 'expired'] }
+            status: { $in: ['active', 'redeemed', 'expired'] }
         });
         const todayRevenue = todayPaidCouponsCount * 10;
 
         // -- TOMORROW STATS --
         const tomorrowPolledCount = await Coupon.countDocuments({
             validForDate: { $gte: tomorrowStartUTC, $lt: tomorrowEndUTC },
-            status: { $in: ['polled', 'requested', 'approved', 'active', 'redeemed'] }
+            status: { $in: ['polled', 'requested', 'approved', 'active', 'redeemed', 'expired'] }
         });
 
         const tomorrowRedeemedCount = await Coupon.countDocuments({
@@ -60,7 +61,7 @@ export async function GET(req: NextRequest) {
 
         const tomorrowPaidCouponsCount = await Coupon.countDocuments({
             validForDate: { $gte: tomorrowStartUTC, $lt: tomorrowEndUTC },
-            status: { $in: ['active', 'redeemed', 'transferred', 'expired'] }
+            status: { $in: ['active', 'redeemed', 'expired'] }
         });
         const tomorrowRevenue = tomorrowPaidCouponsCount * 10;
 

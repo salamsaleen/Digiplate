@@ -38,26 +38,26 @@ export async function GET(req: NextRequest) {
 
         // Polled Today (unpaid for today)
         const polledToday = await Coupon.countDocuments({
-            status: 'polled',
+            status: { $in: ['polled', 'requested', 'approved'] },
             validForDate: { $gte: todayStartUTC, $lt: todayEndUTC }
         });
 
         // Polled Tomorrow (unpaid for tomorrow)
         const polledTomorrow = await Coupon.countDocuments({
-            status: 'polled',
+            status: { $in: ['polled', 'requested', 'approved'] },
             validForDate: { $gte: tomorrowStartUTC, $lt: tomorrowEndUTC }
         });
 
-        // Paid Today (active, redeemed, transferred, expired for today)
+        // Paid Today (active, redeemed, expired for today - ignoring transferred to prevent double count)
         const paidToday = await Coupon.countDocuments({
             validForDate: { $gte: todayStartUTC, $lt: todayEndUTC },
-            status: { $in: ['active', 'redeemed', 'transferred', 'expired'] }
+            status: { $in: ['active', 'redeemed', 'expired'] }
         });
 
-        // Paid Tomorrow (active, redeemed, transferred, expired for tomorrow)
+        // Paid Tomorrow
         const paidTomorrow = await Coupon.countDocuments({
             validForDate: { $gte: tomorrowStartUTC, $lt: tomorrowEndUTC },
-            status: { $in: ['active', 'redeemed', 'transferred', 'expired'] }
+            status: { $in: ['active', 'redeemed', 'expired'] }
         });
 
         // Monthly Revenue Logic
