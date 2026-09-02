@@ -88,7 +88,7 @@ export async function POST(req: NextRequest) {
             customerName: cleanName,
             customerEmail: user.email || '',
             customerPhone: cleanPhone,
-            returnUrl: `${baseUrl}/dashboard?cf_order_status=PAYMENT_COMPLETED&order_id={order_id}`,
+            returnUrl: `${baseUrl}/verify-payment?cf_order_status=PAYMENT_COMPLETED&order_id={order_id}`,
         });
 
         return NextResponse.json({ orderId: createdOrderId, paymentSessionId, amount: 10 });

@@ -56,38 +56,16 @@ export default function StudentDashboard({ user }: { user: any }) {
         return () => clearInterval(timer);
     }, []);
 
-    // Handle Cashfree redirect back to dashboard after payment
-    // Cashfree appends ?cf_link_status=PAID&link_id=...
+    // Handle successful payment redirect from /verify-payment
     useEffect(() => {
-        const paymentStatus = searchParams.get('cf_order_status');
-        const orderIdParam = searchParams.get('order_id');
+        const paymentSuccess = searchParams.get('payment_success');
 
-        if (paymentStatus === 'PAYMENT_COMPLETED' && orderIdParam) {
-            setMessage('✅ Verifying payment securely...');
-
-            // Hit the qr-status endpoint to verify the payment and generate the coupon
-            fetch(`/api/payment/verify?orderId=${orderIdParam}`)
-                .then(res => res.json())
-                .then(data => {
-                    if (data.paid && data.coupon) {
-                        pendingScrollRef.current = true;
-                        setCoupon(data.coupon);
-                        setMessage('✅ Payment Successful! Your meal coupon is ready.');
-                    } else {
-                        pendingScrollRef.current = true;
-                        setMessage(`❌ Verification failed: ${data.message || 'Payment not completed or pending.'}`);
-                        fetchCoupon(); // Fallback
-                    }
-                })
-                .catch(err => {
-                    console.error('Failed to verify payment link redirect', err);
-                    setMessage('❌ Failed to connect to verification server. Please refresh.');
-                    fetchCoupon(); // Fallback
-                })
-                .finally(() => {
-                    // Clean the URL so params don't persist on refresh
-                    window.history.replaceState({}, '', '/dashboard');
-                });
+        if (paymentSuccess === 'true') {
+            setMessage('✅ Payment Successful! Your meal coupon is ready.');
+            pendingScrollRef.current = true;
+            fetchCoupon();
+            // Clean the URL so params don't persist on refresh
+            window.history.replaceState({}, '', '/dashboard');
         }
     }, [searchParams]);
 
